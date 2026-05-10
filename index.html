@@ -57,7 +57,7 @@
             z-index: 51; padding-bottom: env(safe-area-inset-bottom);
             box-shadow: 0 -10px 40px rgba(0,0,0,0.05);
         }
-        #analysis-overlay, #edit-overlay, #auth-overlay {
+        #analysis-overlay, #edit-overlay, #auth-overlay, #birth-overlay {
             position: fixed; inset: 0; background: rgba(15, 23, 42, 0.3);
             backdrop-filter: blur(4px); z-index: 50; display: none;
         }
@@ -134,6 +134,10 @@
                     <button onclick="openAnalysis()" class="p-2 text-slate-400 hover:text-amber-500"><i data-lucide="bar-chart-2" class="w-5 h-5"></i></button>
                     <button onclick="toggleTopMenu(event)" class="p-2 text-slate-400 hover:text-slate-700"><i data-lucide="more-horizontal" class="w-5 h-5"></i></button>
                     <div id="top-menu-panel" class="top-menu-panel">
+                        <button onclick="openBirthModal()" class="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-amber-700">
+                            <i data-lucide="calendar-range" class="w-4 h-4"></i>
+                            <span>出生时间</span>
+                        </button>
                         <a id="github-header-link" href="https://github.com/xuzh237-code/baby-smile" target="_blank" rel="noopener noreferrer" class="flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-slate-800">
                             <i data-lucide="github" class="w-4 h-4"></i>
                             <span>GitHub</span>
@@ -162,7 +166,7 @@
                     <div>
                         <div class="text-[10px] font-bold text-amber-600 tracking-widest">出生天数</div>
                         <div id="baby-age-days" class="text-sm font-black text-slate-800">0 天</div>
-                        <div id="baby-birth-date" class="text-[10px] font-bold text-slate-400 mt-0.5">2025.10.28 出生</div>
+                        <div id="baby-birth-date" class="text-[10px] font-bold text-slate-400 mt-0.5">2025.10.28 00:30 出生</div>
                     </div>
                 </div>
                 <div class="flex flex-col items-end text-right">
@@ -314,7 +318,7 @@
         <footer class="pt-2 pb-4 text-center space-y-2">
             <div class="text-[10px] font-bold text-slate-400 tracking-widest">项目版本</div>
             <div class="flex items-center justify-center gap-2 text-xs font-black text-slate-600">
-                <span id="app-version">v1.1.2</span>
+                <span id="app-version">v1.1.3</span>
                 <span class="text-slate-300">·</span>
                 <span id="app-release-date">发布于 2026-05-10</span>
             </div>
@@ -323,7 +327,7 @@
                     <i data-lucide="github" class="w-4 h-4"></i>
                     <span>GitHub 仓库</span>
                 </a>
-                <a id="release-footer-link" href="https://github.com/xuzh237-code/baby-smile/releases/tag/v1.1.2" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-slate-700">
+                <a id="release-footer-link" href="https://github.com/xuzh237-code/baby-smile/releases/tag/v1.1.3" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-slate-700">
                     <i data-lucide="tag" class="w-4 h-4"></i>
                     <span>Release</span>
                 </a>
@@ -420,6 +424,34 @@
         </div>
     </div>
 
+    <div id="birth-overlay" onclick="closeBirthModal()"></div>
+    <div id="birth-panel" class="bottom-panel p-6">
+        <div class="flex justify-between items-center mb-6">
+            <div class="flex items-center gap-2">
+                <div class="text-amber-500">
+                    <i data-lucide="calendar-range" class="w-5 h-5"></i>
+                </div>
+                <h3 class="text-lg font-black text-slate-800">出生信息</h3>
+            </div>
+            <button onclick="closeBirthModal()" class="p-2 bg-slate-100 rounded-full"><i data-lucide="x" class="w-4 h-4"></i></button>
+        </div>
+        <div class="space-y-4">
+            <div class="space-y-1">
+                <span class="text-[10px] font-bold text-slate-400 px-1">出生日期</span>
+                <input id="birth-date-input" type="date" class="manual-input-base w-full h-14 px-5 text-left">
+            </div>
+            <div class="space-y-1">
+                <span class="text-[10px] font-bold text-slate-400 px-1">出生时间</span>
+                <input id="birth-time-input" type="time" class="manual-input-base w-full h-14 px-5 text-left">
+            </div>
+            <p class="text-[10px] font-bold text-slate-400 px-1">修改后会重新计算出生天数、月龄和周数。</p>
+        </div>
+        <div class="flex space-x-3 mt-8">
+            <button onclick="closeBirthModal()" class="flex-1 h-14 bg-slate-100 text-slate-500 rounded-2xl font-black">取消</button>
+            <button onclick="saveBirthDate()" class="flex-1 h-14 bg-amber-500 text-white rounded-2xl font-black">保存</button>
+        </div>
+    </div>
+
     <div id="edit-overlay" onclick="closeEditPanel()"></div>
     <div id="edit-panel" class="bottom-panel p-6">
         <div class="flex justify-between items-center mb-6">
@@ -439,13 +471,15 @@
         lucide.createIcons();
 
         const LOCAL_RECORDS_KEY = 'baby_records_v13';
+        const LOCAL_BIRTH_INFO_KEY = 'baby_birth_info_v1';
         const SUPABASE_URL = 'https://osclgqcupdgwhndoytgu.supabase.co';
         const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_q5emgRKwcyqgGzj7ztqQIw_bYcaBad6';
-        const appVersion = '1.1.2';
+        const appVersion = '1.1.3';
         const appReleaseDate = '2026-05-10';
         const githubRepoUrl = 'https://github.com/xuzh237-code/baby-smile';
-        const githubReleaseUrl = 'https://github.com/xuzh237-code/baby-smile/releases/tag/v1.1.2';
-        const babyBirthDate = new Date(2025, 9, 28, 0, 30);
+        const githubReleaseUrl = 'https://github.com/xuzh237-code/baby-smile/releases/tag/v1.1.3';
+        const defaultBabyBirthDate = new Date(2025, 9, 28, 0, 30);
+        let babyBirthDate = new Date(defaultBabyBirthDate);
         let records = [];
         let viewDate = new Date();
         let curMilkType = '瓶喂母乳';
@@ -493,6 +527,52 @@
             const parsed = record.date ? new Date(record.date) : null;
             if (parsed && !Number.isNaN(parsed.getTime())) return getDateKey(parsed);
             return getDateKey(new Date());
+        }
+
+        function formatBirthDateForInput(date) {
+            return `${date.getFullYear()}-${padNumber(date.getMonth() + 1)}-${padNumber(date.getDate())}`;
+        }
+
+        function formatBirthTimeForInput(date) {
+            return `${padNumber(date.getHours())}:${padNumber(date.getMinutes())}`;
+        }
+
+        function formatBirthLabel(date) {
+            return `${date.getFullYear()}.${padNumber(date.getMonth() + 1)}.${padNumber(date.getDate())} ${formatBirthTimeForInput(date)} 出生`;
+        }
+
+        function getBirthDateFromUser(user = currentUser) {
+            const raw = user?.user_metadata?.birth_datetime;
+            if (!raw) return null;
+            const parsed = new Date(raw);
+            return Number.isNaN(parsed.getTime()) ? null : parsed;
+        }
+
+        function loadBirthDate() {
+            try {
+                const stored = localStorage.getItem(LOCAL_BIRTH_INFO_KEY);
+                if (!stored) return new Date(defaultBabyBirthDate);
+                const parsed = new Date(stored);
+                return Number.isNaN(parsed.getTime()) ? new Date(defaultBabyBirthDate) : parsed;
+            } catch (error) {
+                return new Date(defaultBabyBirthDate);
+            }
+        }
+
+        function saveBirthDateToLocal() {
+            localStorage.setItem(LOCAL_BIRTH_INFO_KEY, babyBirthDate.toISOString());
+        }
+
+        async function syncBirthDateToUser() {
+            if (!supabaseClient || !currentUser || !babyBirthDate) return;
+            const currentBirth = getBirthDateFromUser(currentUser)?.toISOString();
+            const nextBirth = babyBirthDate.toISOString();
+            if (currentBirth === nextBirth) return;
+            const { data, error } = await supabaseClient.auth.updateUser({
+                data: { birth_datetime: nextBirth }
+            });
+            if (error) throw error;
+            if (data?.user) currentUser = data.user;
         }
 
         function generateRecordId() {
@@ -650,6 +730,57 @@
             }
         }
 
+        function openBirthModal() {
+            closeTopMenu();
+            const overlay = document.getElementById('birth-overlay');
+            const panel = document.getElementById('birth-panel');
+            const dateInput = document.getElementById('birth-date-input');
+            const timeInput = document.getElementById('birth-time-input');
+            if (!overlay || !panel || !dateInput || !timeInput) return;
+            dateInput.value = formatBirthDateForInput(babyBirthDate);
+            timeInput.value = formatBirthTimeForInput(babyBirthDate);
+            overlay.style.display = 'block';
+            setTimeout(() => {
+                overlay.style.opacity = '1';
+                panel.style.transform = 'translateY(0)';
+            }, 10);
+        }
+
+        function closeBirthModal() {
+            const overlay = document.getElementById('birth-overlay');
+            const panel = document.getElementById('birth-panel');
+            if (!overlay || !panel) return;
+            overlay.style.opacity = '0';
+            panel.style.transform = 'translateY(100%)';
+            setTimeout(() => {
+                overlay.style.display = 'none';
+            }, 300);
+        }
+
+        async function saveBirthDate() {
+            const dateValue = document.getElementById('birth-date-input')?.value;
+            const timeValue = document.getElementById('birth-time-input')?.value;
+            if (!dateValue || !timeValue) return showToast('请填写出生日期和时间');
+            const nextBirthDate = new Date(`${dateValue}T${timeValue}:00`);
+            if (Number.isNaN(nextBirthDate.getTime())) return showToast('出生时间格式不正确');
+            if (nextBirthDate > new Date()) return showToast('出生时间不能晚于现在');
+
+            babyBirthDate = nextBirthDate;
+            saveBirthDateToLocal();
+            updateBabyAgeUI();
+            closeBirthModal();
+
+            try {
+                if (currentUser) {
+                    await syncBirthDateToUser();
+                }
+                showToast('出生信息已更新');
+            } catch (error) {
+                console.error(error);
+                showToast('已保存到本机，账号同步稍后重试');
+            }
+        }
+
         function setTopMenuOpen(open) {
             isTopMenuOpen = open;
             const panel = document.getElementById('top-menu-panel');
@@ -767,6 +898,14 @@
             }
 
             try {
+                const remoteBirthDate = getBirthDateFromUser(currentUser);
+                if (remoteBirthDate) {
+                    babyBirthDate = remoteBirthDate;
+                    saveBirthDateToLocal();
+                    updateBabyAgeUI();
+                } else {
+                    await syncBirthDateToUser();
+                }
                 setSyncState(true);
                 await mergeLocalRecordsIntoCloud();
                 await refreshRecordsFromCloud();
@@ -904,9 +1043,11 @@
             const daysEl = document.getElementById('baby-age-days');
             const monthsEl = document.getElementById('baby-age-months');
             const weekLabelEl = document.getElementById('baby-age-week-label');
+            const birthDateEl = document.getElementById('baby-birth-date');
             if (daysEl) daysEl.innerText = `${totalDays} 天`;
             if (monthsEl) monthsEl.innerText = `${months}个月${extraDays}天`;
             if (weekLabelEl) weekLabelEl.innerText = `第 ${currentWeek} 周`;
+            if (birthDateEl) birthDateEl.innerText = formatBirthLabel(babyBirthDate);
         }
 
         function updateAppMetaUI() {
@@ -1190,7 +1331,7 @@
             const dateKey = typeof targetDate === 'string' ? targetDate : getDateKey(targetDate);
             return records
                 .filter(r => r.cat === '补剂' && getRecordDateKey(r) === dateKey)
-                .sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+                .sort((a, b) => (b.time || '').localeCompare(a.time || ''));
         }
 
         function getSupplementStatus(targetDate) {
@@ -1360,7 +1501,7 @@
             categoryOrder.forEach(cat => {
                 const recs = dateRecs
                     .filter(r => r.cat === cat)
-                    .sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+                    .sort((a, b) => (b.time || '').localeCompare(a.time || ''));
 
                 if (!recs.length) return;
 
@@ -1856,6 +1997,7 @@
         }
 
         window.onload = async () => {
+            babyBirthDate = loadBirthDate();
             records = loadLocalRecords();
             updateAppMetaUI();
             updateBabyAgeUI();

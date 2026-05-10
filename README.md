@@ -9,11 +9,11 @@
 ## GitHub 仓库
 
 - Repository: [https://github.com/xuzh237-code/baby-smile](https://github.com/xuzh237-code/baby-smile)
-- Release: [https://github.com/xuzh237-code/baby-smile/releases/tag/v1.1.2](https://github.com/xuzh237-code/baby-smile/releases/tag/v1.1.2)
+- Release: [https://github.com/xuzh237-code/baby-smile/releases/tag/v1.1.3](https://github.com/xuzh237-code/baby-smile/releases/tag/v1.1.3)
 
 ## 当前版本
 
-- Version: `1.1.2`
+- Version: `1.1.3`
 - Release Date: `2026-05-10`
 
 ## 功能概览
