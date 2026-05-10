@@ -127,9 +127,9 @@
                     <h1 class="text-lg font-black text-slate-800 tracking-tight">宝宝日志</h1>
                 </div>
                 <div class="flex items-center space-x-1 relative">
-                    <button id="auth-trigger-btn" onclick="openAuthModal()" class="flex items-center gap-2 px-2.5 py-2 text-slate-400 hover:text-violet-600 rounded-xl transition-all">
+                    <button id="auth-trigger-btn" onclick="openAuthModal()" class="flex items-center gap-2 px-3 py-2 text-amber-700 bg-amber-50 hover:bg-amber-100 rounded-xl transition-all border border-amber-100">
                         <i data-lucide="user-circle-2" class="w-5 h-5"></i>
-                        <span id="auth-trigger-label" class="hidden text-xs font-black text-slate-600 max-w-[88px] truncate">登录</span>
+                        <span id="auth-trigger-label" class="text-xs font-black text-current max-w-[88px] truncate">登录</span>
                     </button>
                     <button onclick="openAnalysis()" class="p-2 text-slate-400 hover:text-amber-500"><i data-lucide="bar-chart-2" class="w-5 h-5"></i></button>
                     <button onclick="toggleTopMenu(event)" class="p-2 text-slate-400 hover:text-slate-700"><i data-lucide="more-horizontal" class="w-5 h-5"></i></button>
@@ -314,7 +314,7 @@
         <footer class="pt-2 pb-4 text-center space-y-2">
             <div class="text-[10px] font-bold text-slate-400 tracking-widest">项目版本</div>
             <div class="flex items-center justify-center gap-2 text-xs font-black text-slate-600">
-                <span id="app-version">v1.1.1</span>
+                <span id="app-version">v1.1.2</span>
                 <span class="text-slate-300">·</span>
                 <span id="app-release-date">发布于 2026-05-10</span>
             </div>
@@ -323,7 +323,7 @@
                     <i data-lucide="github" class="w-4 h-4"></i>
                     <span>GitHub 仓库</span>
                 </a>
-                <a id="release-footer-link" href="https://github.com/xuzh237-code/baby-smile/releases/tag/v1.1.1" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-slate-700">
+                <a id="release-footer-link" href="https://github.com/xuzh237-code/baby-smile/releases/tag/v1.1.2" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-slate-700">
                     <i data-lucide="tag" class="w-4 h-4"></i>
                     <span>Release</span>
                 </a>
@@ -441,10 +441,10 @@
         const LOCAL_RECORDS_KEY = 'baby_records_v13';
         const SUPABASE_URL = 'https://osclgqcupdgwhndoytgu.supabase.co';
         const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_q5emgRKwcyqgGzj7ztqQIw_bYcaBad6';
-        const appVersion = '1.1.1';
+        const appVersion = '1.1.2';
         const appReleaseDate = '2026-05-10';
         const githubRepoUrl = 'https://github.com/xuzh237-code/baby-smile';
-        const githubReleaseUrl = 'https://github.com/xuzh237-code/baby-smile/releases/tag/v1.1.1';
+        const githubReleaseUrl = 'https://github.com/xuzh237-code/baby-smile/releases/tag/v1.1.2';
         const babyBirthDate = new Date(2025, 9, 28, 0, 30);
         let records = [];
         let viewDate = new Date();
@@ -627,12 +627,11 @@
             }
             if (authTrigger) {
                 authTrigger.className = loggedIn
-                    ? 'flex items-center gap-2 px-2.5 py-2 text-violet-600 hover:text-violet-700 rounded-xl transition-all'
-                    : 'flex items-center gap-2 px-2.5 py-2 text-slate-400 hover:text-violet-600 rounded-xl transition-all';
+                    ? 'flex items-center gap-2 px-3 py-2 text-violet-600 hover:text-violet-700 bg-violet-50 rounded-xl transition-all border border-violet-100'
+                    : 'flex items-center gap-2 px-3 py-2 text-amber-700 bg-amber-50 hover:bg-amber-100 rounded-xl transition-all border border-amber-100';
             }
             if (authTriggerLabel) {
                 authTriggerLabel.innerText = loggedIn ? userDisplayName : '登录';
-                authTriggerLabel.classList.toggle('hidden', false);
             }
         }
 
