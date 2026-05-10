@@ -127,7 +127,10 @@
                     <h1 class="text-lg font-black text-slate-800 tracking-tight">宝宝日志</h1>
                 </div>
                 <div class="flex items-center space-x-1 relative">
-                    <button onclick="openAuthModal()" class="p-2 text-slate-400 hover:text-violet-600"><i data-lucide="user-circle-2" class="w-5 h-5"></i></button>
+                    <button id="auth-trigger-btn" onclick="openAuthModal()" class="flex items-center gap-2 px-2.5 py-2 text-slate-400 hover:text-violet-600 rounded-xl transition-all">
+                        <i data-lucide="user-circle-2" class="w-5 h-5"></i>
+                        <span id="auth-trigger-label" class="hidden text-xs font-black text-slate-600 max-w-[88px] truncate">登录</span>
+                    </button>
                     <button onclick="openAnalysis()" class="p-2 text-slate-400 hover:text-amber-500"><i data-lucide="bar-chart-2" class="w-5 h-5"></i></button>
                     <button onclick="toggleTopMenu(event)" class="p-2 text-slate-400 hover:text-slate-700"><i data-lucide="more-horizontal" class="w-5 h-5"></i></button>
                     <div id="top-menu-panel" class="top-menu-panel">
@@ -311,7 +314,7 @@
         <footer class="pt-2 pb-4 text-center space-y-2">
             <div class="text-[10px] font-bold text-slate-400 tracking-widest">项目版本</div>
             <div class="flex items-center justify-center gap-2 text-xs font-black text-slate-600">
-                <span id="app-version">v1.1.0</span>
+                <span id="app-version">v1.1.1</span>
                 <span class="text-slate-300">·</span>
                 <span id="app-release-date">发布于 2026-05-10</span>
             </div>
@@ -320,7 +323,7 @@
                     <i data-lucide="github" class="w-4 h-4"></i>
                     <span>GitHub 仓库</span>
                 </a>
-                <a id="release-footer-link" href="https://github.com/xuzh237-code/baby-smile/releases/tag/v1.1.0" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-slate-700">
+                <a id="release-footer-link" href="https://github.com/xuzh237-code/baby-smile/releases/tag/v1.1.1" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-slate-700">
                     <i data-lucide="tag" class="w-4 h-4"></i>
                     <span>Release</span>
                 </a>
@@ -438,10 +441,10 @@
         const LOCAL_RECORDS_KEY = 'baby_records_v13';
         const SUPABASE_URL = 'https://osclgqcupdgwhndoytgu.supabase.co';
         const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_q5emgRKwcyqgGzj7ztqQIw_bYcaBad6';
-        const appVersion = '1.1.0';
+        const appVersion = '1.1.1';
         const appReleaseDate = '2026-05-10';
         const githubRepoUrl = 'https://github.com/xuzh237-code/baby-smile';
-        const githubReleaseUrl = 'https://github.com/xuzh237-code/baby-smile/releases/tag/v1.1.0';
+        const githubReleaseUrl = 'https://github.com/xuzh237-code/baby-smile/releases/tag/v1.1.1';
         const babyBirthDate = new Date(2025, 9, 28, 0, 30);
         let records = [];
         let viewDate = new Date();
@@ -596,7 +599,9 @@
             const syncText = document.getElementById('auth-sync-text');
             const cloudCount = document.getElementById('auth-cloud-count');
             const helpText = document.getElementById('auth-help-text');
-            const authTrigger = document.querySelector('button[onclick="openAuthModal()"]');
+            const authTrigger = document.getElementById('auth-trigger-btn');
+            const authTriggerLabel = document.getElementById('auth-trigger-label');
+            const userDisplayName = getUserDisplayName();
 
             if (loggedOutPanel) loggedOutPanel.classList.toggle('hidden', loggedIn);
             if (loggedInPanel) loggedInPanel.classList.toggle('hidden', !loggedIn);
@@ -608,20 +613,41 @@
                     : 'text-[10px] font-bold px-3 py-1.5 rounded-full text-slate-500 bg-slate-100';
             }
 
-            if (emailEl) emailEl.innerText = currentUser?.email || '-';
+            if (emailEl) emailEl.innerText = userDisplayName || '-';
             if (syncText) {
                 syncText.innerText = loggedIn
-                    ? (isSyncingRecords ? '正在同步到云端…' : '云端已连接')
+                    ? (isSyncingRecords ? '正在同步…' : '已开启同步')
                     : '当前仅保存在本机';
             }
             if (cloudCount) cloudCount.innerText = `${records.length} 条`;
             if (helpText) {
-                helpText.innerText = '登录后可在多个设备同步查看数据。Google 登录需先在 Supabase 后台完成 Google 配置。';
+                helpText.innerText = loggedIn
+                    ? '登录后新增和修改的数据会自动同步。'
+                    : '登录后可在多个设备同步查看数据。';
             }
             if (authTrigger) {
                 authTrigger.className = loggedIn
-                    ? 'p-2 text-violet-600 hover:text-violet-700'
-                    : 'p-2 text-slate-400 hover:text-violet-600';
+                    ? 'flex items-center gap-2 px-2.5 py-2 text-violet-600 hover:text-violet-700 rounded-xl transition-all'
+                    : 'flex items-center gap-2 px-2.5 py-2 text-slate-400 hover:text-violet-600 rounded-xl transition-all';
+            }
+            if (authTriggerLabel) {
+                authTriggerLabel.innerText = loggedIn ? userDisplayName : '登录';
+                authTriggerLabel.classList.toggle('hidden', false);
+            }
+        }
+
+        function getUserDisplayName() {
+            if (!currentUser) return '';
+            const metadataName = currentUser.user_metadata?.full_name || currentUser.user_metadata?.name;
+            if (metadataName) return metadataName;
+            const email = currentUser.email || '';
+            return email.includes('@') ? email.split('@')[0] : email;
+        }
+
+        function closeAuthModalAfterSuccess() {
+            const overlay = document.getElementById('auth-overlay');
+            if (overlay && overlay.style.display === 'block') {
+                closeAuthModal();
             }
         }
 
@@ -746,6 +772,7 @@
                 await mergeLocalRecordsIntoCloud();
                 await refreshRecordsFromCloud();
                 if (source !== 'initial' && source !== 'INITIAL_SESSION') {
+                    closeAuthModalAfterSuccess();
                     showToast('已登录，云端同步已开启');
                 }
             } catch (error) {
