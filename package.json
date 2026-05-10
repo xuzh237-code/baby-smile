@@ -1,0 +1,12 @@
+{
+  "name": "baby-smile",
+  "version": "1.0.0",
+  "private": false,
+  "description": "A lightweight baby care log web app.",
+  "homepage": "https://xuzh237-code.github.io/baby-smile/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/xuzh237-code/baby-smile.git"
+  },
+  "license": "UNLICENSED"
+}

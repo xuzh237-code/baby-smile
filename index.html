@@ -70,6 +70,15 @@
         .btn-blue { background-color: #0ea5e9; color: white; }
 
         .date-shifter { transition: all 0.3s ease; }
+        .sleep-awake-panel {
+            transition: all 0.2s ease;
+        }
+        .sleep-awake-panel.active-night {
+            background: #eff6ff;
+            border-radius: 1rem;
+            padding: 0.85rem;
+            box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.18);
+        }
         .category-records-enter {
             animation: categoryRecordsEnter 0.22s ease;
             transform-origin: top;
@@ -87,6 +96,7 @@
         table { width: 100%; border-collapse: collapse; font-size: 12px; }
         th, td { padding: 10px 8px; text-align: left; border-bottom: 1px solid #f1f5f9; }
         th { color: #94a3b8; font-size: 10px; }
+        a { -webkit-tap-highlight-color: transparent; }
     </style>
 </head>
 <body class="pb-10">
@@ -100,10 +110,29 @@
                 <h1 class="text-lg font-black text-slate-800 tracking-tight">宝宝日志</h1>
             </div>
             <div class="flex space-x-1">
+                <a id="github-header-link" href="https://github.com/xuzh237-code/baby-smile" target="_blank" rel="noopener noreferrer" class="p-2 text-slate-400 hover:text-slate-700"><i data-lucide="github" class="w-5 h-5"></i></a>
                 <button onclick="openAnalysis()" class="p-2 text-slate-400 hover:text-amber-500"><i data-lucide="bar-chart-2" class="w-5 h-5"></i></button>
                 <button onclick="document.getElementById('csv-upload').click()" class="p-2 text-slate-400 hover:text-emerald-600"><i data-lucide="upload" class="w-5 h-5"></i></button>
                 <button onclick="exportData()" class="p-2 text-slate-400 hover:text-indigo-600"><i data-lucide="download" class="w-5 h-5"></i></button>
                 <button onclick="clearAll()" class="p-2 text-slate-400 hover:text-red-500"><i data-lucide="trash-2" class="w-5 h-5"></i></button>
+            </div>
+        </div>
+
+        <div class="mb-3 bg-amber-50 border border-amber-100 rounded-2xl px-4 py-3 flex items-center justify-between gap-4">
+            <div class="flex items-center space-x-2">
+                <div class="bg-amber-500/10 text-amber-500 p-2 rounded-xl">
+                    <i data-lucide="calendar-heart" class="w-4 h-4"></i>
+                </div>
+                <div>
+                    <div class="text-[10px] font-bold text-amber-600 tracking-widest">出生天数</div>
+                    <div id="baby-age-days" class="text-sm font-black text-slate-800">0 天</div>
+                    <div id="baby-birth-date" class="text-[10px] font-bold text-slate-400 mt-0.5">2025.10.28 出生</div>
+                </div>
+            </div>
+            <div class="flex flex-col items-end text-right">
+                <div class="text-[10px] font-bold text-amber-600 tracking-widest mb-1">成长阶段</div>
+                <div id="baby-age-months" class="text-sm font-black text-slate-800">0 月龄 + 0 天</div>
+                <div id="baby-age-week-label" class="text-[10px] font-black text-slate-400 mt-0.5">第 0 周</div>
             </div>
         </div>
 
@@ -203,7 +232,23 @@
                     <input type="text" inputmode="numeric" placeholder="HH:mm" id="sleep-end-time" class="manual-input-base manual-time-input" onblur="formatTimeInput(this)">
                 </div>
             </div>
-            <button onclick="saveSleep()" class="w-full btn-blue h-14 rounded-2xl font-black shadow-lg shadow-sky-100 transition-transform active:scale-95">保存睡眠数据</button>
+            <div id="sleep-awake-panel" class="space-y-2 sleep-awake-panel">
+                <div class="flex items-center justify-between px-1">
+                    <span id="sleep-awake-title" class="text-[10px] font-bold text-slate-400">夜间清醒时段 (可空)</span>
+                    <span id="sleep-awake-hint" class="text-[10px] font-bold text-slate-300">会自动扣除睡眠时长</span>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-1">
+                        <span class="text-[10px] font-bold text-slate-400 px-1">清醒开始</span>
+                        <input type="text" inputmode="numeric" placeholder="HH:mm" id="sleep-awake-start-time" class="manual-input-base manual-time-input" onblur="formatTimeInput(this)">
+                    </div>
+                    <div class="space-y-1">
+                        <span class="text-[10px] font-bold text-slate-400 px-1">清醒结束</span>
+                        <input type="text" inputmode="numeric" placeholder="HH:mm" id="sleep-awake-end-time" class="manual-input-base manual-time-input" onblur="formatTimeInput(this)">
+                    </div>
+                </div>
+            </div>
+            <button id="save-sleep-btn" onclick="saveSleep()" class="w-full btn-blue h-14 rounded-2xl font-black shadow-lg shadow-sky-100 transition-transform active:scale-95">保存睡眠数据</button>
         </section>
 
         <section class="bg-white rounded-[2rem] p-6 card-shadow border border-slate-50 space-y-4">
@@ -212,7 +257,7 @@
                     <i data-lucide="pill" class="w-5 h-5"></i>
                     <h2 class="font-black text-slate-800">补剂</h2>
                 </div>
-                <span id="supplement-hint" class="text-[10px] font-bold text-indigo-500 bg-indigo-50 px-3 py-1.5 rounded-full">建议今日补剂：AD</span>
+                <span id="supplement-hint" class="text-[10px] font-bold text-indigo-500 bg-indigo-50 px-3 py-1.5 rounded-full">今天提醒：上午 AD，午间 D3</span>
             </div>
             <div class="tab-group">
                 <button id="supplement-type-ad" onclick="setSupplementType('AD')" class="tab-btn active-yellow">AD</button>
@@ -228,6 +273,19 @@
         </section>
 
         <div id="history-list" class="space-y-3 pb-10"></div>
+
+        <footer class="pt-2 pb-4 text-center space-y-2">
+            <div class="text-[10px] font-bold text-slate-400 tracking-widest">项目版本</div>
+            <div class="flex items-center justify-center gap-2 text-xs font-black text-slate-600">
+                <span id="app-version">v1.0.0</span>
+                <span class="text-slate-300">·</span>
+                <span id="app-release-date">发布于 2026-05-10</span>
+            </div>
+            <a id="github-footer-link" href="https://github.com/xuzh237-code/baby-smile" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-slate-700">
+                <i data-lucide="github" class="w-4 h-4"></i>
+                <span>GitHub 仓库</span>
+            </a>
+        </footer>
     </main>
 
     <div id="analysis-overlay" onclick="closeAnalysis()"></div>
@@ -238,11 +296,11 @@
         </div>
         <div class="space-y-8">
             <div class="tab-group">
-                <button id="analysis-range-day" onclick="setAnalysisRange('day')" class="tab-btn active-yellow">近7天</button>
-                <button id="analysis-range-week" onclick="setAnalysisRange('week')" class="tab-btn">周</button>
-                <button id="analysis-range-month" onclick="setAnalysisRange('month')" class="tab-btn">月</button>
-                <button id="analysis-range-quarter" onclick="setAnalysisRange('quarter')" class="tab-btn">季度</button>
-                <button id="analysis-range-year" onclick="setAnalysisRange('year')" class="tab-btn">年</button>
+                <button id="analysis-range-day" onclick="setAnalysisRange('day')" class="tab-btn active-yellow">7天</button>
+                <button id="analysis-range-week" onclick="setAnalysisRange('week')" class="tab-btn">14天</button>
+                <button id="analysis-range-month" onclick="setAnalysisRange('month')" class="tab-btn">30天</button>
+                <button id="analysis-range-quarter" onclick="setAnalysisRange('quarter')" class="tab-btn">90天</button>
+                <button id="analysis-range-year" onclick="setAnalysisRange('year')" class="tab-btn">365天</button>
             </div>
             <div class="space-y-2">
                 <span id="analysis-chart-caption" class="text-xs font-bold text-slate-400">奶量 & 睡眠 (ml / h)</span>
@@ -281,6 +339,10 @@
         lucide.createIcons();
 
         let records = JSON.parse(localStorage.getItem('baby_records_v13')) || [];
+        const appVersion = '1.0.0';
+        const appReleaseDate = '2026-05-10';
+        const githubRepoUrl = 'https://github.com/xuzh237-code/baby-smile';
+        const babyBirthDate = new Date(2025, 9, 28, 0, 30);
         let viewDate = new Date();
         let curMilkType = '瓶喂母乳';
         let curPoopType = '尿尿';
@@ -302,6 +364,7 @@
             viewDate.setDate(viewDate.getDate() + offset);
             updateDateUI();
             setDefaultTimes();
+            updateSleepAwakePanelState();
             render();
         }
 
@@ -309,7 +372,43 @@
             viewDate = new Date();
             updateDateUI();
             setDefaultTimes();
+            updateSleepAwakePanelState();
             render();
+        }
+
+        function updateBabyAgeUI() {
+            const now = new Date();
+            const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const birthStart = new Date(babyBirthDate.getFullYear(), babyBirthDate.getMonth(), babyBirthDate.getDate());
+            const dayMs = 24 * 60 * 60 * 1000;
+            const totalDays = Math.max(0, Math.floor((todayStart - birthStart) / dayMs));
+            const currentWeek = Math.floor(totalDays / 7) + 1;
+            let months = (todayStart.getFullYear() - birthStart.getFullYear()) * 12 + (todayStart.getMonth() - birthStart.getMonth());
+            if (todayStart.getDate() < birthStart.getDate()) {
+                months -= 1;
+            }
+            months = Math.max(0, months);
+
+            const monthAnchor = new Date(birthStart.getFullYear(), birthStart.getMonth() + months, birthStart.getDate());
+            const extraDays = Math.max(0, Math.floor((todayStart - monthAnchor) / dayMs));
+
+            const daysEl = document.getElementById('baby-age-days');
+            const monthsEl = document.getElementById('baby-age-months');
+            const weekLabelEl = document.getElementById('baby-age-week-label');
+            if (daysEl) daysEl.innerText = `${totalDays} 天`;
+            if (monthsEl) monthsEl.innerText = `${months}个月${extraDays}天`;
+            if (weekLabelEl) weekLabelEl.innerText = `第 ${currentWeek} 周`;
+        }
+
+        function updateAppMetaUI() {
+            const versionEl = document.getElementById('app-version');
+            const releaseDateEl = document.getElementById('app-release-date');
+            const githubHeaderLink = document.getElementById('github-header-link');
+            const githubFooterLink = document.getElementById('github-footer-link');
+            if (versionEl) versionEl.innerText = `v${appVersion}`;
+            if (releaseDateEl) releaseDateEl.innerText = `发布于 ${appReleaseDate}`;
+            if (githubHeaderLink) githubHeaderLink.href = githubRepoUrl;
+            if (githubFooterLink) githubFooterLink.href = githubRepoUrl;
         }
 
         function updateDateUI() {
@@ -379,6 +478,99 @@
             return true;
         }
 
+        function timeToMinutes(timeStr) {
+            const [hh, mm] = timeStr.split(':').map(Number);
+            return hh * 60 + mm;
+        }
+
+        function getSpanMinutes(start, end, crossDay = false) {
+            let diff = timeToMinutes(end) - timeToMinutes(start);
+            if (crossDay || diff < 0) diff += 1440;
+            return diff;
+        }
+
+        function isNightSleep(start, end, cross) {
+            if (cross) return true;
+            if (start.length < 5 || end.length < 5) return false;
+            const startMinutes = timeToMinutes(start);
+            const endMinutes = timeToMinutes(end);
+            return startMinutes >= 19 * 60 || endMinutes <= 9 * 60;
+        }
+
+        function updateSleepAwakePanelState() {
+            const panel = document.getElementById('sleep-awake-panel');
+            const title = document.getElementById('sleep-awake-title');
+            const hint = document.getElementById('sleep-awake-hint');
+            const saveBtn = document.getElementById('save-sleep-btn');
+            if (!panel || !title || !hint) return;
+
+            const start = document.getElementById('sleep-start-time')?.value || '';
+            const end = document.getElementById('sleep-end-time')?.value || '';
+            const cross = document.getElementById('sleep-cross-day')?.checked || false;
+            const activeNight = isNightSleep(start, end, cross);
+
+            panel.classList.toggle('hidden', !activeNight);
+            panel.classList.toggle('active-night', activeNight);
+            title.className = activeNight
+                ? 'text-[10px] font-bold text-sky-600'
+                : 'text-[10px] font-bold text-slate-400';
+            hint.innerText = activeNight ? '夜间醒来时可填写' : '会自动扣除睡眠时长';
+            hint.className = activeNight
+                ? 'text-[10px] font-bold text-sky-400'
+                : 'text-[10px] font-bold text-slate-300';
+            if (saveBtn) {
+                saveBtn.innerText = activeNight ? '保存夜间睡眠' : '保存睡眠数据';
+            }
+
+            if (!activeNight) {
+                ['sleep-awake-start-time', 'sleep-awake-end-time'].forEach(id => {
+                    const input = document.getElementById(id);
+                    if (input) input.value = '';
+                });
+            }
+        }
+
+        function getRelativeMinutesWithinSleep(sleepStart, sleepEnd, cross, target) {
+            let relative = timeToMinutes(target) - timeToMinutes(sleepStart);
+            if (relative < 0) relative += 1440;
+            const total = getSpanMinutes(sleepStart, sleepEnd, cross);
+            return { relative, total };
+        }
+
+        function buildSleepRecordData(start, end, cross, awakeStart = '', awakeEnd = '') {
+            if(start.length < 5 || end.length < 5) return { error: '请填写时间' };
+            if (!isNightSleep(start, end, cross)) {
+                awakeStart = '';
+                awakeEnd = '';
+            }
+            const hasAwakeStart = awakeStart.length >= 5;
+            const hasAwakeEnd = awakeEnd.length >= 5;
+            if (hasAwakeStart !== hasAwakeEnd) return { error: '请填写完整清醒时段' };
+
+            const totalMinutes = getSpanMinutes(start, end, cross);
+            let awakeMinutes = 0;
+            if (hasAwakeStart && hasAwakeEnd) {
+                const awakeStartInfo = getRelativeMinutesWithinSleep(start, end, cross, awakeStart);
+                const awakeEndInfo = getRelativeMinutesWithinSleep(start, end, cross, awakeEnd);
+
+                if (awakeStartInfo.relative >= totalMinutes) return { error: '清醒开始时间不在这段睡眠范围内' };
+                if (awakeEndInfo.relative > totalMinutes) return { error: '清醒结束时间超出了这段睡眠范围' };
+                if (awakeEndInfo.relative <= awakeStartInfo.relative) return { error: '清醒结束时间需要晚于清醒开始时间' };
+
+                awakeMinutes = awakeEndInfo.relative - awakeStartInfo.relative;
+                if (awakeMinutes >= totalMinutes) return { error: '清醒时段不能覆盖整段睡眠' };
+            }
+
+            const sleepHours = ((totalMinutes - awakeMinutes) / 60).toFixed(1);
+            const awakeText = awakeMinutes > 0 ? ` · 清醒 ${awakeStart}~${awakeEnd}` : '';
+            return {
+                val: `${start} ~ ${end}${awakeText} (${sleepHours}h)`,
+                raw: parseFloat(sleepHours),
+                time: end,
+                meta: { start, end, cross, awakeStart, awakeEnd, awakeMinutes }
+            };
+        }
+
         function handleEnterSubmit(event) {
             if (event.key !== 'Enter') return;
             const target = event.target;
@@ -395,6 +587,7 @@
                 const editPoopIds = ['edit-t-time'];
                 const editSupplementIds = ['edit-t-time'];
                 const editSleepIds = ['edit-s-time', 'edit-e-time'];
+                const editSleepAwakeIds = ['edit-awake-s-time', 'edit-awake-e-time'];
 
                 if (editMilkIds.includes(target.id)) {
                     if (!focusNextInput(editMilkIds, target.id)) updateRecord();
@@ -413,6 +606,11 @@
 
                 if (editSleepIds.includes(target.id)) {
                     if (!focusNextInput(editSleepIds, target.id)) updateRecord();
+                    return;
+                }
+
+                if (editSleepAwakeIds.includes(target.id)) {
+                    if (!focusNextInput(editSleepAwakeIds, target.id)) updateRecord();
                     return;
                 }
 
@@ -438,6 +636,12 @@
             const sleepIds = ['sleep-start-time', 'sleep-end-time'];
             if (sleepIds.includes(target.id)) {
                 if (!focusNextInput(sleepIds, target.id)) saveSleep();
+                return;
+            }
+
+            const sleepAwakeIds = ['sleep-awake-start-time', 'sleep-awake-end-time'];
+            if (sleepAwakeIds.includes(target.id)) {
+                if (!focusNextInput(sleepAwakeIds, target.id)) saveSleep();
             }
         }
 
@@ -448,8 +652,13 @@
             if (today === current) {
                 timeStr = new Date().toTimeString().slice(0, 5);
             }
-            document.querySelectorAll('.manual-time-input').forEach(input => {
-                input.value = timeStr;
+            ['milk-start-time', 'milk-end-time', 'poop-time', 'sleep-start-time', 'sleep-end-time', 'supplement-time'].forEach(id => {
+                const input = document.getElementById(id);
+                if (input) input.value = timeStr;
+            });
+            ['sleep-awake-start-time', 'sleep-awake-end-time'].forEach(id => {
+                const input = document.getElementById(id);
+                if (input) input.value = '';
             });
         }
 
@@ -466,14 +675,41 @@
             });
         }
 
-        function getSupplementRecords() {
-            return records.filter(r => r.cat === '补剂').sort((a, b) => b.id - a.id);
+        function getSupplementRecordsByDate(dateStr) {
+            return records
+                .filter(r => r.cat === '补剂' && r.date === dateStr)
+                .sort((a, b) => (a.time || '').localeCompare(b.time || ''));
         }
 
-        function getRecommendedSupplement() {
-            const latest = getSupplementRecords()[0];
-            if (!latest) return 'AD';
-            return latest.type === 'AD' ? 'D3' : 'AD';
+        function getSupplementStatus(targetDate) {
+            const dateStr = targetDate.toLocaleDateString();
+            const today = new Date().toLocaleDateString();
+            const isViewingToday = dateStr === today;
+            const currentHour = new Date().getHours();
+            const dayLabel = isViewingToday ? '今日' : '当日';
+            const supplementRecords = getSupplementRecordsByDate(dateStr);
+            const adDone = supplementRecords.some(r => r.type === 'AD');
+            const d3Done = supplementRecords.some(r => r.type === 'D3');
+
+            let suggested = 'AD';
+            if (!adDone && (!isViewingToday || currentHour < 12)) {
+                suggested = 'AD';
+            } else if (!d3Done) {
+                suggested = 'D3';
+            } else if (!adDone) {
+                suggested = 'AD';
+            }
+
+            let hint = `${dayLabel}提醒：上午 AD，午间 D3`;
+            if (adDone && d3Done) {
+                hint = `${dayLabel}补剂已完成 AD + D3`;
+            } else if (adDone && !d3Done) {
+                hint = `${dayLabel}已记录 AD，待记录午间 D3`;
+            } else if (!adDone && d3Done) {
+                hint = `${dayLabel}已记录 D3，待记录上午 AD`;
+            }
+
+            return { supplementRecords, adDone, d3Done, suggested, hint };
         }
 
         function setSupplementType(type) {
@@ -483,13 +719,9 @@
         }
 
         function syncSupplementUI() {
-            const targetDate = viewDate.toLocaleDateString();
-            const todaySupplement = records.find(r => r.date === targetDate && r.cat === '补剂');
-            const suggested = todaySupplement ? todaySupplement.type : getRecommendedSupplement();
-            document.getElementById('supplement-hint').innerText = todaySupplement
-                ? `今日已记录 ${todaySupplement.type}`
-                : `建议今日补剂：${suggested}`;
-            setSupplementType(suggested);
+            const status = getSupplementStatus(viewDate);
+            document.getElementById('supplement-hint').innerText = status.hint;
+            setSupplementType(status.suggested);
         }
 
         function getCategorySummary(cat, recs) {
@@ -507,8 +739,9 @@
                 return `${recs.length}段 · ${totalSleep}h`;
             }
             if (cat === '补剂') {
-                const latest = recs[recs.length - 1];
-                return latest ? `已记录 ${latest.type}` : `${recs.length}次`;
+                const adCount = recs.filter(record => record.type === 'AD').length;
+                const d3Count = recs.filter(record => record.type === 'D3').length;
+                return `AD ${adCount}次 · D3 ${d3Count}次`;
             }
             return `${recs.length}条`;
         }
@@ -539,13 +772,9 @@
         function saveSupplement() {
             const t = document.getElementById('supplement-time').value;
             if(t.length < 5) return showToast('请填写时间');
-            const targetDate = viewDate.toLocaleDateString();
-            const todaySupplement = records.find(r => r.date === targetDate && r.cat === '补剂');
-            if (todaySupplement) {
-                const message = todaySupplement.type === curSupplementType
-                    ? `今天已经记录过 ${todaySupplement.type}，还要继续记录吗？`
-                    : `今天已经记录过 ${todaySupplement.type}，现在再记录 ${curSupplementType} 吗？`;
-                if (!confirm(message)) return;
+            const status = getSupplementStatus(viewDate);
+            if ((curSupplementType === 'AD' && status.adDone) || (curSupplementType === 'D3' && status.d3Done)) {
+                if (!confirm(`今天已经记录过 ${curSupplementType}，还要继续记录吗？`)) return;
             }
             addRecord('补剂', curSupplementType, `${curSupplementType} (${t})`, 1, 'pill', 'indigo', t, {time: t, type: curSupplementType});
             syncSupplementUI();
@@ -561,11 +790,11 @@
             const s = document.getElementById('sleep-start-time').value;
             const e = document.getElementById('sleep-end-time').value;
             const cross = document.getElementById('sleep-cross-day').checked;
-            if(s.length < 5 || e.length < 5) return showToast('请填写时间');
-            let diff = (parseInt(e.split(':')[0])*60+parseInt(e.split(':')[1])) - (parseInt(s.split(':')[0])*60+parseInt(s.split(':')[1]));
-            if (cross || diff < 0) diff += 1440;
-            const h = (diff / 60).toFixed(1);
-            addRecord('睡眠', cross ? '跨天睡眠' : '常规睡眠', `${s} ~ ${e} (${h}h)`, parseFloat(h), 'moon', 'sky', e, {start: s, end: e, cross: cross});
+            const awakeStart = document.getElementById('sleep-awake-start-time').value;
+            const awakeEnd = document.getElementById('sleep-awake-end-time').value;
+            const sleepRecord = buildSleepRecordData(s, e, cross, awakeStart, awakeEnd);
+            if (sleepRecord.error) return showToast(sleepRecord.error);
+            addRecord('睡眠', cross ? '跨天睡眠' : '常规睡眠', sleepRecord.val, sleepRecord.raw, 'moon', 'sky', sleepRecord.time, sleepRecord.meta);
         }
 
         function addRecord(cat, type, val, raw, icon, color, time, meta) {
@@ -630,6 +859,9 @@
                 const recordsWrap = document.createElement('div');
                 recordsWrap.className = 'space-y-3 category-records-enter';
                 recs.forEach(r => {
+                    const sleepAwakeBadge = r.cat === '睡眠' && (r.meta?.awakeMinutes || 0) > 0
+                        ? `<span class="text-[10px] font-bold bg-sky-50 text-sky-500 px-1.5 py-0.5 rounded-full">含清醒</span>`
+                        : '';
                     const div = document.createElement('div');
                     div.className = `record-item bg-white p-4 rounded-2xl flex items-center justify-between card-shadow border border-slate-50`;
                     div.onclick = () => openEdit(r.id);
@@ -640,6 +872,7 @@
                                 <div class="flex items-center space-x-2">
                                     <span class="font-black text-slate-700 text-sm">${r.cat}</span>
                                     <span class="text-[10px] font-bold bg-slate-50 text-slate-400 px-1.5 py-0.5 rounded-full">${r.type}</span>
+                                    ${sleepAwakeBadge}
                                 </div>
                                 <p class="text-[10px] font-bold text-slate-300 mt-0.5">记录时间 · ${r.time}</p>
                             </div>
@@ -676,17 +909,17 @@
         function formatBucketLabel(range, start, end) {
             if (range === 'day') return `${String(start.getMonth() + 1).padStart(2, '0')}/${String(start.getDate()).padStart(2, '0')}`;
             if (range === 'week') return `${String(start.getMonth() + 1).padStart(2, '0')}/${String(start.getDate()).padStart(2, '0')}`;
-            if (range === 'month') return `${start.getFullYear()}.${String(start.getMonth() + 1).padStart(2, '0')}`;
-            if (range === 'quarter') return `${start.getFullYear()} Q${Math.floor(start.getMonth() / 3) + 1}`;
-            return `${start.getFullYear()}`;
+            if (range === 'month') return `${String(start.getMonth() + 1).padStart(2, '0')}/${String(start.getDate()).padStart(2, '0')}`;
+            if (range === 'quarter') return `${String(start.getMonth() + 1).padStart(2, '0')}/${String(start.getDate()).padStart(2, '0')}`;
+            return `${String(start.getMonth() + 1).padStart(2, '0')}/${String(start.getDate()).padStart(2, '0')}`;
         }
 
         function getAnalysisConfig(range) {
-            if (range === 'week') return { count: 8, title: '趋势对比 (近8周)', table: '每周统计数据', firstCol: '周', key: 'week' };
-            if (range === 'month') return { count: 6, title: '趋势对比 (近6个月)', table: '每月统计数据', firstCol: '月', key: 'month' };
-            if (range === 'quarter') return { count: 4, title: '趋势对比 (近4个季度)', table: '每季度统计数据', firstCol: '季度', key: 'quarter' };
-            if (range === 'year') return { count: 5, title: '趋势对比 (近5年)', table: '每年统计数据', firstCol: '年份', key: 'year' };
-            return { count: 7, title: '趋势对比 (近7天)', table: '每日统计数据', firstCol: '日期', key: 'day' };
+            if (range === 'week') return { count: 14, title: '近14天趋势', table: '每日统计数据', firstCol: '日期', key: 'week' };
+            if (range === 'month') return { count: 30, title: '近30天趋势', table: '每日统计数据', firstCol: '日期', key: 'month' };
+            if (range === 'quarter') return { count: 90, title: '近90天趋势', table: '每日统计数据', firstCol: '日期', key: 'quarter' };
+            if (range === 'year') return { count: 365, title: '近365天趋势', table: '每日统计数据', firstCol: '日期', key: 'year' };
+            return { count: 7, title: '近7天趋势', table: '每日统计数据', firstCol: '日期', key: 'day' };
         }
 
         function buildAnalysisBuckets(range) {
@@ -698,28 +931,11 @@
                 let start;
                 let end;
 
-                if (range === 'week') {
-                    start = startOfWeek(now);
-                    start.setDate(start.getDate() - i * 7);
-                    end = new Date(start);
-                    end.setDate(end.getDate() + 7);
-                } else if (range === 'month') {
-                    start = new Date(now.getFullYear(), now.getMonth() - i, 1);
-                    end = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
-                } else if (range === 'quarter') {
-                    const quarterStart = startOfQuarter(now);
-                    start = new Date(quarterStart.getFullYear(), quarterStart.getMonth() - i * 3, 1);
-                    end = new Date(start.getFullYear(), start.getMonth() + 3, 1);
-                } else if (range === 'year') {
-                    start = new Date(now.getFullYear() - i, 0, 1);
-                    end = new Date(now.getFullYear() - i + 1, 0, 1);
-                } else {
-                    start = new Date(now);
-                    start.setHours(0, 0, 0, 0);
-                    start.setDate(start.getDate() - i);
-                    end = new Date(start);
-                    end.setDate(end.getDate() + 1);
-                }
+                start = new Date(now);
+                start.setHours(0, 0, 0, 0);
+                start.setDate(start.getDate() - i);
+                end = new Date(start);
+                end.setDate(end.getDate() + 1);
 
                 buckets.push({
                     label: formatBucketLabel(range, start, end),
@@ -765,8 +981,9 @@
             const w = Math.max(container.clientWidth - 32, 240);
             const h = 140;
             const groupWidth = w / buckets.length;
-            const barWidth = Math.min(Math.max(groupWidth * 0.24, 10), 22);
-            const gap = Math.max(groupWidth * 0.08, 4);
+            const barWidth = Math.min(Math.max(groupWidth * 0.35, 0.8), 18);
+            const gap = Math.max(groupWidth * 0.12, 0.5);
+            const labelEvery = buckets.length <= 10 ? 1 : buckets.length <= 31 ? 5 : buckets.length <= 100 ? 14 : 30;
 
             container.innerHTML = `
                 <svg class="w-full h-full overflow-visible">
@@ -790,7 +1007,7 @@
                             fill="#38bdf8"
                             opacity="0.9"
                         />
-                        <text x="${i * groupWidth + groupWidth / 2}" y="${h + 20}" text-anchor="middle" class="text-[8px] fill-slate-300 font-bold">${item.label}</text>
+                        ${(i % labelEvery === 0 || i === buckets.length - 1) ? `<text x="${i * groupWidth + groupWidth / 2}" y="${h + 20}" text-anchor="middle" class="text-[8px] fill-slate-300 font-bold">${item.label}</text>` : ''}
                     `).join('')}
                 </svg>
             `;
@@ -857,6 +1074,10 @@
                     <div class="space-y-1"><span class="text-[10px] font-bold text-slate-400">入睡</span><input type="text" id="edit-s-time" value="${r.meta.start}" class="manual-input-base manual-time-input" onblur="formatTimeInput(this)"></div>
                     <div class="space-y-1"><span class="text-[10px] font-bold text-slate-400">醒来</span><input type="text" id="edit-e-time" value="${r.meta.end}" class="manual-input-base manual-time-input" onblur="formatTimeInput(this)"></div>
                 </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-1"><span class="text-[10px] font-bold text-slate-400">清醒开始</span><input type="text" id="edit-awake-s-time" value="${r.meta.awakeStart || ''}" class="manual-input-base manual-time-input" onblur="formatTimeInput(this)"></div>
+                    <div class="space-y-1"><span class="text-[10px] font-bold text-slate-400">清醒结束</span><input type="text" id="edit-awake-e-time" value="${r.meta.awakeEnd || ''}" class="manual-input-base manual-time-input" onblur="formatTimeInput(this)"></div>
+                </div>
                 <div class="flex items-center space-x-2 bg-slate-50 p-4 rounded-2xl"><input type="checkbox" id="edit-cross" ${r.meta.cross ? 'checked' : ''} class="w-5 h-5 rounded text-sky-600"><span class="text-xs font-bold text-slate-600">跨天睡眠</span></div>`;
             }
             form.innerHTML = html;
@@ -903,10 +1124,11 @@
                 const s = document.getElementById('edit-s-time').value;
                 const e = document.getElementById('edit-e-time').value;
                 const cross = document.getElementById('edit-cross').checked;
-                let diff = (parseInt(e.split(':')[0])*60+parseInt(e.split(':')[1])) - (parseInt(s.split(':')[0])*60+parseInt(s.split(':')[1]));
-                if (cross || diff < 0) diff += 1440;
-                const h = (diff / 60).toFixed(1);
-                r.meta = {start: s, end: e, cross: cross}; r.val = `${s} ~ ${e} (${h}h)`; r.raw = parseFloat(h); r.time = e;
+                const awakeStart = document.getElementById('edit-awake-s-time').value;
+                const awakeEnd = document.getElementById('edit-awake-e-time').value;
+                const sleepRecord = buildSleepRecordData(s, e, cross, awakeStart, awakeEnd);
+                if (sleepRecord.error) return showToast(sleepRecord.error);
+                r.meta = sleepRecord.meta; r.val = sleepRecord.val; r.raw = sleepRecord.raw; r.time = sleepRecord.time;
             }
             saveToStorage(); render(); closeEditPanel(); showToast('已更新');
         }
@@ -969,6 +1191,9 @@
                 r.time,
                 r.meta?.start || '',
                 r.meta?.end || '',
+                r.meta?.awakeStart || '',
+                r.meta?.awakeEnd || '',
+                r.meta?.awakeMinutes || '',
                 r.meta?.volume || '',
                 r.meta?.cross ? 'true' : 'false',
                 r.meta?.time || ''
@@ -983,6 +1208,9 @@
 
             if (data.meta_start) meta.start = data.meta_start;
             if (data.meta_end) meta.end = data.meta_end;
+            if (data.meta_awake_start) meta.awakeStart = data.meta_awake_start;
+            if (data.meta_awake_end) meta.awakeEnd = data.meta_awake_end;
+            if (data.meta_awake_minutes) meta.awakeMinutes = parseInt(data.meta_awake_minutes);
             if (data.meta_volume) meta.volume = parseInt(data.meta_volume);
             if (data.meta_cross) meta.cross = data.meta_cross.toLowerCase() === 'true';
             if (data.meta_time) meta.time = data.meta_time;
@@ -1002,7 +1230,7 @@
         }
 
         function exportData() {
-            const headers = ['id', 'date', 'cat', 'type', 'val', 'raw', 'icon', 'color', 'time', 'meta_start', 'meta_end', 'meta_volume', 'meta_cross', 'meta_time'];
+            const headers = ['id', 'date', 'cat', 'type', 'val', 'raw', 'icon', 'color', 'time', 'meta_start', 'meta_end', 'meta_awake_start', 'meta_awake_end', 'meta_awake_minutes', 'meta_volume', 'meta_cross', 'meta_time'];
             const csv = [
                 headers.join(','),
                 ...records.map(record => recordToCsvRow(record).map(csvEscape).join(','))
@@ -1055,11 +1283,25 @@
         }
 
         window.onload = () => {
+            updateAppMetaUI();
+            updateBabyAgeUI();
             updateDateUI();
             setDefaultTimes();
+            updateSleepAwakePanelState();
             render();
             bindInputInteractions();
             document.addEventListener('keydown', handleEnterSubmit);
+            ['sleep-start-time', 'sleep-end-time', 'sleep-awake-start-time', 'sleep-awake-end-time'].forEach(id => {
+                const input = document.getElementById(id);
+                if (input) input.addEventListener('input', updateSleepAwakePanelState);
+            });
+            const crossDayCheckbox = document.getElementById('sleep-cross-day');
+            if (crossDayCheckbox) crossDayCheckbox.addEventListener('change', updateSleepAwakePanelState);
+            setInterval(() => {
+                if (viewDate.toLocaleDateString() === new Date().toLocaleDateString()) {
+                    syncSupplementUI();
+                }
+            }, 60000);
         };
     </script>
 </body>
