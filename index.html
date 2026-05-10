@@ -6,6 +6,7 @@
     <title>宝宝成长记录助手</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -56,7 +57,7 @@
             z-index: 51; padding-bottom: env(safe-area-inset-bottom);
             box-shadow: 0 -10px 40px rgba(0,0,0,0.05);
         }
-        #analysis-overlay, #edit-overlay {
+        #analysis-overlay, #edit-overlay, #auth-overlay {
             position: fixed; inset: 0; background: rgba(15, 23, 42, 0.3);
             backdrop-filter: blur(4px); z-index: 50; display: none;
         }
@@ -83,6 +84,21 @@
             animation: categoryRecordsEnter 0.22s ease;
             transform-origin: top;
         }
+        .top-menu-panel {
+            position: absolute;
+            top: calc(100% + 0.5rem);
+            right: 0;
+            width: 176px;
+            background: white;
+            border: 1px solid #f1f5f9;
+            border-radius: 1rem;
+            box-shadow: 0 16px 36px rgba(15, 23, 42, 0.08);
+            padding: 0.5rem;
+            display: none;
+        }
+        .top-menu-panel.open {
+            display: block;
+        }
         @keyframes categoryRecordsEnter {
             from {
                 opacity: 0;
@@ -101,49 +117,67 @@
 </head>
 <body class="pb-10">
 
-    <header class="bg-white/90 backdrop-blur-md border-b sticky top-0 z-20 px-6 py-3">
-        <div class="flex justify-between items-center mb-3">
-            <div class="flex items-center space-x-2">
-                <div class="bg-amber-500 p-1.5 rounded-lg text-white">
-                    <i data-lucide="baby" class="w-5 h-5"></i>
+    <header class="bg-white/90 backdrop-blur-md border-b sticky top-0 z-20 px-4 py-3">
+        <div class="max-w-md mx-auto">
+            <div class="flex justify-between items-center mb-3">
+                <div class="flex items-center space-x-2">
+                    <div class="bg-amber-500 p-1.5 rounded-lg text-white">
+                        <i data-lucide="baby" class="w-5 h-5"></i>
+                    </div>
+                    <h1 class="text-lg font-black text-slate-800 tracking-tight">宝宝日志</h1>
                 </div>
-                <h1 class="text-lg font-black text-slate-800 tracking-tight">宝宝日志</h1>
+                <div class="flex items-center space-x-1 relative">
+                    <button onclick="openAuthModal()" class="p-2 text-slate-400 hover:text-violet-600"><i data-lucide="user-circle-2" class="w-5 h-5"></i></button>
+                    <button onclick="openAnalysis()" class="p-2 text-slate-400 hover:text-amber-500"><i data-lucide="bar-chart-2" class="w-5 h-5"></i></button>
+                    <button onclick="toggleTopMenu(event)" class="p-2 text-slate-400 hover:text-slate-700"><i data-lucide="more-horizontal" class="w-5 h-5"></i></button>
+                    <div id="top-menu-panel" class="top-menu-panel">
+                        <a id="github-header-link" href="https://github.com/xuzh237-code/baby-smile" target="_blank" rel="noopener noreferrer" class="flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-slate-800">
+                            <i data-lucide="github" class="w-4 h-4"></i>
+                            <span>GitHub</span>
+                        </a>
+                        <button onclick="triggerCsvUpload()" class="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-emerald-600">
+                            <i data-lucide="upload" class="w-4 h-4"></i>
+                            <span>上传 CSV</span>
+                        </button>
+                        <button onclick="exportDataFromMenu()" class="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-indigo-600">
+                            <i data-lucide="download" class="w-4 h-4"></i>
+                            <span>下载 CSV</span>
+                        </button>
+                        <button onclick="clearAllFromMenu()" class="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-red-500">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            <span>清空记录</span>
+                        </button>
+                    </div>
+                </div>
             </div>
-            <div class="flex space-x-1">
-                <a id="github-header-link" href="https://github.com/xuzh237-code/baby-smile" target="_blank" rel="noopener noreferrer" class="p-2 text-slate-400 hover:text-slate-700"><i data-lucide="github" class="w-5 h-5"></i></a>
-                <button onclick="openAnalysis()" class="p-2 text-slate-400 hover:text-amber-500"><i data-lucide="bar-chart-2" class="w-5 h-5"></i></button>
-                <button onclick="document.getElementById('csv-upload').click()" class="p-2 text-slate-400 hover:text-emerald-600"><i data-lucide="upload" class="w-5 h-5"></i></button>
-                <button onclick="exportData()" class="p-2 text-slate-400 hover:text-indigo-600"><i data-lucide="download" class="w-5 h-5"></i></button>
-                <button onclick="clearAll()" class="p-2 text-slate-400 hover:text-red-500"><i data-lucide="trash-2" class="w-5 h-5"></i></button>
-            </div>
-        </div>
 
-        <div class="mb-3 bg-amber-50 border border-amber-100 rounded-2xl px-4 py-3 flex items-center justify-between gap-4">
-            <div class="flex items-center space-x-2">
-                <div class="bg-amber-500/10 text-amber-500 p-2 rounded-xl">
-                    <i data-lucide="calendar-heart" class="w-4 h-4"></i>
+            <div class="mb-3 bg-amber-50 border border-amber-100 rounded-2xl px-4 py-3 flex items-center justify-between gap-4">
+                <div class="flex items-center space-x-2">
+                    <div class="bg-amber-500/10 text-amber-500 p-2 rounded-xl">
+                        <i data-lucide="calendar-heart" class="w-4 h-4"></i>
+                    </div>
+                    <div>
+                        <div class="text-[10px] font-bold text-amber-600 tracking-widest">出生天数</div>
+                        <div id="baby-age-days" class="text-sm font-black text-slate-800">0 天</div>
+                        <div id="baby-birth-date" class="text-[10px] font-bold text-slate-400 mt-0.5">2025.10.28 出生</div>
+                    </div>
                 </div>
-                <div>
-                    <div class="text-[10px] font-bold text-amber-600 tracking-widest">出生天数</div>
-                    <div id="baby-age-days" class="text-sm font-black text-slate-800">0 天</div>
-                    <div id="baby-birth-date" class="text-[10px] font-bold text-slate-400 mt-0.5">2025.10.28 出生</div>
+                <div class="flex flex-col items-end text-right">
+                    <div class="text-[10px] font-bold text-amber-600 tracking-widest mb-1">成长阶段</div>
+                    <div id="baby-age-months" class="text-sm font-black text-slate-800">0 月龄 + 0 天</div>
+                    <div id="baby-age-week-label" class="text-[10px] font-black text-slate-400 mt-0.5">第 0 周</div>
                 </div>
             </div>
-            <div class="flex flex-col items-end text-right">
-                <div class="text-[10px] font-bold text-amber-600 tracking-widest mb-1">成长阶段</div>
-                <div id="baby-age-months" class="text-sm font-black text-slate-800">0 月龄 + 0 天</div>
-                <div id="baby-age-week-label" class="text-[10px] font-black text-slate-400 mt-0.5">第 0 周</div>
-            </div>
-        </div>
 
-        <div class="flex items-center justify-between bg-slate-100 p-1 rounded-2xl gap-2">
-            <button onclick="shiftDate(-1)" class="p-2 hover:bg-white rounded-xl transition-all"><i data-lucide="chevron-left" class="w-5 h-5 text-slate-400"></i></button>
-            <div id="current-date-display" class="font-black text-slate-700 flex-1 flex flex-col items-center">
-                <span class="text-sm" id="display-date-text">2023年10月27日</span>
-                <span class="text-[9px] text-amber-600 font-bold tracking-widest uppercase" id="display-day-tag">今天</span>
+            <div class="flex items-center justify-between bg-slate-100 p-1 rounded-2xl gap-2">
+                <button onclick="shiftDate(-1)" class="p-2 hover:bg-white rounded-xl transition-all"><i data-lucide="chevron-left" class="w-5 h-5 text-slate-400"></i></button>
+                <div id="current-date-display" class="font-black text-slate-700 flex-1 flex flex-col items-center">
+                    <span class="text-sm" id="display-date-text">2023年10月27日</span>
+                    <span class="text-[9px] text-amber-600 font-bold tracking-widest uppercase" id="display-day-tag">今天</span>
+                </div>
+                <button id="jump-today-btn" onclick="jumpToToday()" class="px-3 py-2 text-[10px] font-black text-amber-600 bg-white rounded-xl shadow-sm transition-all hidden">今天</button>
+                <button onclick="shiftDate(1)" class="p-2 hover:bg-white rounded-xl transition-all"><i data-lucide="chevron-right" class="w-5 h-5 text-slate-400"></i></button>
             </div>
-            <button id="jump-today-btn" onclick="jumpToToday()" class="px-3 py-2 text-[10px] font-black text-amber-600 bg-white rounded-xl shadow-sm transition-all hidden">今天</button>
-            <button onclick="shiftDate(1)" class="p-2 hover:bg-white rounded-xl transition-all"><i data-lucide="chevron-right" class="w-5 h-5 text-slate-400"></i></button>
         </div>
     </header>
     <input id="csv-upload" type="file" accept=".csv,text/csv" class="hidden" onchange="importData(event)">
@@ -277,14 +311,20 @@
         <footer class="pt-2 pb-4 text-center space-y-2">
             <div class="text-[10px] font-bold text-slate-400 tracking-widest">项目版本</div>
             <div class="flex items-center justify-center gap-2 text-xs font-black text-slate-600">
-                <span id="app-version">v1.0.0</span>
+                <span id="app-version">v1.1.0</span>
                 <span class="text-slate-300">·</span>
                 <span id="app-release-date">发布于 2026-05-10</span>
             </div>
-            <a id="github-footer-link" href="https://github.com/xuzh237-code/baby-smile" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-slate-700">
-                <i data-lucide="github" class="w-4 h-4"></i>
-                <span>GitHub 仓库</span>
-            </a>
+            <div class="flex items-center justify-center gap-4">
+                <a id="github-footer-link" href="https://github.com/xuzh237-code/baby-smile" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-slate-700">
+                    <i data-lucide="github" class="w-4 h-4"></i>
+                    <span>GitHub 仓库</span>
+                </a>
+                <a id="release-footer-link" href="https://github.com/xuzh237-code/baby-smile/releases/tag/v1.1.0" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-slate-700">
+                    <i data-lucide="tag" class="w-4 h-4"></i>
+                    <span>Release</span>
+                </a>
+            </div>
         </footer>
     </main>
 
@@ -320,6 +360,63 @@
         </div>
     </div>
 
+    <div id="auth-overlay" onclick="closeAuthModal()"></div>
+    <div id="auth-panel" class="bottom-panel p-6 overflow-y-auto" style="max-height: 90vh;">
+        <div class="flex justify-between items-center mb-6">
+            <div class="flex items-center gap-2">
+                <div class="text-violet-500">
+                    <i data-lucide="cloud" class="w-5 h-5"></i>
+                </div>
+                <h3 class="text-lg font-black text-slate-800">账号同步</h3>
+            </div>
+            <button onclick="closeAuthModal()" class="p-2 bg-slate-100 rounded-full"><i data-lucide="x" class="w-4 h-4"></i></button>
+        </div>
+        <div class="space-y-4">
+            <div class="flex items-center justify-between gap-3">
+                <span id="auth-status-badge" class="text-[10px] font-bold px-3 py-1.5 rounded-full text-slate-500 bg-slate-100">本地模式</span>
+                <span id="auth-help-text" class="text-[10px] font-bold text-slate-400">登录后可在多个设备同步查看数据。</span>
+            </div>
+
+            <div id="auth-logged-out" class="space-y-4">
+                <div class="grid grid-cols-1 gap-3">
+                    <div class="space-y-1">
+                        <span class="text-[10px] font-bold text-slate-400 px-1">邮箱</span>
+                        <input id="auth-email" type="email" inputmode="email" placeholder="name@example.com" class="manual-input-base w-full h-14 px-5 text-left">
+                    </div>
+                    <div class="space-y-1">
+                        <span class="text-[10px] font-bold text-slate-400 px-1">密码</span>
+                        <input id="auth-password" type="password" placeholder="至少 6 位密码" class="manual-input-base w-full h-14 px-5 text-left">
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-3">
+                    <button onclick="signInWithEmail()" class="h-12 rounded-2xl bg-slate-900 text-white text-sm font-black">登录</button>
+                    <button onclick="signUpWithEmail()" class="h-12 rounded-2xl bg-violet-500 text-white text-sm font-black shadow-lg shadow-violet-100">注册</button>
+                    <button onclick="signInWithGoogle()" class="h-12 rounded-2xl bg-slate-100 text-slate-600 text-sm font-black">Google</button>
+                </div>
+            </div>
+
+            <div id="auth-logged-in" class="hidden space-y-4">
+                <div class="flex items-center justify-between gap-3 bg-slate-50 rounded-2xl px-4 py-3">
+                    <div class="min-w-0">
+                        <div class="text-[10px] font-bold text-slate-400 tracking-widest">当前账号</div>
+                        <div id="auth-user-email" class="text-sm font-black text-slate-800 truncate">-</div>
+                    </div>
+                    <button onclick="signOutUser()" class="h-11 px-4 rounded-2xl bg-white text-slate-600 text-sm font-black border border-slate-200">退出</button>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-slate-50 rounded-2xl px-4 py-3">
+                        <div class="text-[10px] font-bold text-slate-400 tracking-widest">同步状态</div>
+                        <div id="auth-sync-text" class="text-sm font-black text-slate-800 mt-1">云端已连接</div>
+                    </div>
+                    <div class="bg-slate-50 rounded-2xl px-4 py-3">
+                        <div class="text-[10px] font-bold text-slate-400 tracking-widest">云端记录</div>
+                        <div id="auth-cloud-count" class="text-sm font-black text-slate-800 mt-1">0 条</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="edit-overlay" onclick="closeEditPanel()"></div>
     <div id="edit-panel" class="bottom-panel p-6">
         <div class="flex justify-between items-center mb-6">
@@ -338,11 +435,15 @@
     <script>
         lucide.createIcons();
 
-        let records = JSON.parse(localStorage.getItem('baby_records_v13')) || [];
-        const appVersion = '1.0.0';
+        const LOCAL_RECORDS_KEY = 'baby_records_v13';
+        const SUPABASE_URL = 'https://osclgqcupdgwhndoytgu.supabase.co';
+        const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_q5emgRKwcyqgGzj7ztqQIw_bYcaBad6';
+        const appVersion = '1.1.0';
         const appReleaseDate = '2026-05-10';
         const githubRepoUrl = 'https://github.com/xuzh237-code/baby-smile';
+        const githubReleaseUrl = 'https://github.com/xuzh237-code/baby-smile/releases/tag/v1.1.0';
         const babyBirthDate = new Date(2025, 9, 28, 0, 30);
+        let records = [];
         let viewDate = new Date();
         let curMilkType = '瓶喂母乳';
         let curPoopType = '尿尿';
@@ -350,6 +451,10 @@
         let editingRecordId = null;
         let analysisRange = 'day';
         let collapsedCategories = {};
+        let supabaseClient = null;
+        let currentUser = null;
+        let isSyncingRecords = false;
+        let isTopMenuOpen = false;
 
         let touchStartX = 0;
         const swipeArea = document.getElementById('swipe-area');
@@ -359,6 +464,384 @@
             if (touchStartX - touchEndX > 80) shiftDate(1);
             if (touchEndX - touchStartX > 80) shiftDate(-1);
         });
+
+        function padNumber(value) {
+            return String(value).padStart(2, '0');
+        }
+
+        function getDateKey(date) {
+            return `${date.getFullYear()}-${padNumber(date.getMonth() + 1)}-${padNumber(date.getDate())}`;
+        }
+
+        function parseDateKey(dateKey) {
+            const [year, month, day] = String(dateKey).split('-').map(Number);
+            if (!year || !month || !day) return null;
+            return new Date(year, month - 1, day);
+        }
+
+        function getDateLabelFromKey(dateKey) {
+            const parsed = parseDateKey(dateKey);
+            return parsed ? parsed.toLocaleDateString() : new Date().toLocaleDateString();
+        }
+
+        function getRecordDateKey(record) {
+            if (record.dateKey) return record.dateKey;
+            if (record.record_date_key) return record.record_date_key;
+            const parsed = record.date ? new Date(record.date) : null;
+            if (parsed && !Number.isNaN(parsed.getTime())) return getDateKey(parsed);
+            return getDateKey(new Date());
+        }
+
+        function generateRecordId() {
+            if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+                return window.crypto.randomUUID();
+            }
+            return `record-${Date.now()}-${Math.random().toString(16).slice(2, 10)}`;
+        }
+
+        function sortRecordsByRecent(recordList) {
+            return [...recordList].sort((a, b) => {
+                const aDate = getRecordDateKey(a);
+                const bDate = getRecordDateKey(b);
+                if (aDate !== bDate) return bDate.localeCompare(aDate);
+                if ((a.time || '') !== (b.time || '')) return (b.time || '').localeCompare(a.time || '');
+                return String(b.id || '').localeCompare(String(a.id || ''));
+            });
+        }
+
+        function normalizeRecord(record) {
+            const dateKey = getRecordDateKey(record);
+            return {
+                id: String(record.id || generateRecordId()),
+                dateKey,
+                date: record.date || getDateLabelFromKey(dateKey),
+                cat: record.cat || '',
+                type: record.type || '',
+                val: record.val || '',
+                raw: Number(record.raw) || 0,
+                icons: Array.isArray(record.icons) && record.icons.length ? record.icons : [record.icon || 'circle'],
+                color: record.color || 'slate',
+                time: record.time || '',
+                meta: record.meta && typeof record.meta === 'object' ? record.meta : {},
+                createdAt: record.createdAt || record.created_at || new Date().toISOString(),
+                updatedAt: record.updatedAt || record.updated_at || new Date().toISOString()
+            };
+        }
+
+        function loadLocalRecords() {
+            try {
+                const stored = JSON.parse(localStorage.getItem(LOCAL_RECORDS_KEY)) || [];
+                return sortRecordsByRecent(stored.map(normalizeRecord));
+            } catch (error) {
+                return [];
+            }
+        }
+
+        function saveToStorage() {
+            localStorage.setItem(LOCAL_RECORDS_KEY, JSON.stringify(sortRecordsByRecent(records)));
+        }
+
+        function toDbRecord(record) {
+            return {
+                id: String(record.id),
+                user_id: currentUser?.id,
+                record_date_key: getRecordDateKey(record),
+                legacy_date: record.date || getDateLabelFromKey(getRecordDateKey(record)),
+                cat: record.cat,
+                type: record.type,
+                val: record.val,
+                raw: record.raw || 0,
+                icon: record.icons?.[0] || 'circle',
+                color: record.color,
+                time: record.time,
+                meta: record.meta || {},
+                created_at: record.createdAt || new Date().toISOString(),
+                updated_at: record.updatedAt || new Date().toISOString()
+            };
+        }
+
+        function fromDbRecord(row) {
+            return normalizeRecord({
+                id: row.id,
+                dateKey: row.record_date_key,
+                date: row.legacy_date || getDateLabelFromKey(row.record_date_key),
+                cat: row.cat,
+                type: row.type,
+                val: row.val,
+                raw: row.raw,
+                icon: row.icon,
+                color: row.color,
+                time: row.time,
+                meta: row.meta || {},
+                created_at: row.created_at,
+                updated_at: row.updated_at
+            });
+        }
+
+        function getAuthRedirectUrl() {
+            return `${window.location.origin}${window.location.pathname}`;
+        }
+
+        function setSyncState(syncing) {
+            isSyncingRecords = syncing;
+            updateAuthUI();
+        }
+
+        function updateAuthUI() {
+            const loggedIn = !!currentUser;
+            const loggedOutPanel = document.getElementById('auth-logged-out');
+            const loggedInPanel = document.getElementById('auth-logged-in');
+            const badge = document.getElementById('auth-status-badge');
+            const emailEl = document.getElementById('auth-user-email');
+            const syncText = document.getElementById('auth-sync-text');
+            const cloudCount = document.getElementById('auth-cloud-count');
+            const helpText = document.getElementById('auth-help-text');
+            const authTrigger = document.querySelector('button[onclick="openAuthModal()"]');
+
+            if (loggedOutPanel) loggedOutPanel.classList.toggle('hidden', loggedIn);
+            if (loggedInPanel) loggedInPanel.classList.toggle('hidden', !loggedIn);
+
+            if (badge) {
+                badge.innerText = loggedIn ? (isSyncingRecords ? '同步中' : '云端模式') : '本地模式';
+                badge.className = loggedIn
+                    ? 'text-[10px] font-bold px-3 py-1.5 rounded-full text-violet-600 bg-violet-50'
+                    : 'text-[10px] font-bold px-3 py-1.5 rounded-full text-slate-500 bg-slate-100';
+            }
+
+            if (emailEl) emailEl.innerText = currentUser?.email || '-';
+            if (syncText) {
+                syncText.innerText = loggedIn
+                    ? (isSyncingRecords ? '正在同步到云端…' : '云端已连接')
+                    : '当前仅保存在本机';
+            }
+            if (cloudCount) cloudCount.innerText = `${records.length} 条`;
+            if (helpText) {
+                helpText.innerText = '登录后可在多个设备同步查看数据。Google 登录需先在 Supabase 后台完成 Google 配置。';
+            }
+            if (authTrigger) {
+                authTrigger.className = loggedIn
+                    ? 'p-2 text-violet-600 hover:text-violet-700'
+                    : 'p-2 text-slate-400 hover:text-violet-600';
+            }
+        }
+
+        function setTopMenuOpen(open) {
+            isTopMenuOpen = open;
+            const panel = document.getElementById('top-menu-panel');
+            if (!panel) return;
+            panel.classList.toggle('open', open);
+        }
+
+        function toggleTopMenu(event) {
+            event?.stopPropagation();
+            setTopMenuOpen(!isTopMenuOpen);
+        }
+
+        function closeTopMenu() {
+            setTopMenuOpen(false);
+        }
+
+        function triggerCsvUpload() {
+            closeTopMenu();
+            document.getElementById('csv-upload').click();
+        }
+
+        function exportDataFromMenu() {
+            closeTopMenu();
+            exportData();
+        }
+
+        async function clearAllFromMenu() {
+            closeTopMenu();
+            await clearAll();
+        }
+
+        function openAuthModal() {
+            closeTopMenu();
+            const overlay = document.getElementById('auth-overlay');
+            const panel = document.getElementById('auth-panel');
+            if (!overlay || !panel) return;
+            overlay.style.display = 'block';
+            setTimeout(() => {
+                overlay.style.opacity = '1';
+                panel.style.transform = 'translateY(0)';
+            }, 10);
+        }
+
+        function closeAuthModal() {
+            const overlay = document.getElementById('auth-overlay');
+            const panel = document.getElementById('auth-panel');
+            if (!overlay || !panel) return;
+            overlay.style.opacity = '0';
+            panel.style.transform = 'translateY(100%)';
+            setTimeout(() => {
+                overlay.style.display = 'none';
+            }, 300);
+        }
+
+        async function refreshRecordsFromCloud() {
+            if (!supabaseClient || !currentUser) return;
+            const { data, error } = await supabaseClient
+                .from('baby_records')
+                .select('*')
+                .order('record_date_key', { ascending: false })
+                .order('time', { ascending: false })
+                .order('created_at', { ascending: false });
+
+            if (error) throw error;
+            records = sortRecordsByRecent((data || []).map(fromDbRecord));
+            saveToStorage();
+            render();
+        }
+
+        async function mergeLocalRecordsIntoCloud() {
+            if (!supabaseClient || !currentUser) return;
+            const localRecords = loadLocalRecords();
+            const { data, error } = await supabaseClient.from('baby_records').select('id');
+            if (error) throw error;
+            const cloudIds = new Set((data || []).map(item => String(item.id)));
+            const pending = localRecords.filter(record => !cloudIds.has(String(record.id)));
+            if (!pending.length) return;
+            const payload = pending.map(record => toDbRecord(record));
+            const { error: upsertError } = await supabaseClient.from('baby_records').upsert(payload, { onConflict: 'id' });
+            if (upsertError) throw upsertError;
+        }
+
+        async function persistRecordToCloud(record) {
+            if (!supabaseClient || !currentUser) return;
+            const { error } = await supabaseClient.from('baby_records').upsert([toDbRecord(record)], { onConflict: 'id' });
+            if (error) throw error;
+        }
+
+        async function deleteRecordFromCloud(recordId) {
+            if (!supabaseClient || !currentUser) return;
+            const { error } = await supabaseClient.from('baby_records').delete().eq('id', String(recordId));
+            if (error) throw error;
+        }
+
+        async function replaceCloudRecords(nextRecords) {
+            if (!supabaseClient || !currentUser) return;
+            const { error: deleteError } = await supabaseClient.from('baby_records').delete().eq('user_id', currentUser.id);
+            if (deleteError) throw deleteError;
+            if (!nextRecords.length) return;
+            const { error: upsertError } = await supabaseClient
+                .from('baby_records')
+                .upsert(nextRecords.map(record => toDbRecord(record)), { onConflict: 'id' });
+            if (upsertError) throw upsertError;
+        }
+
+        async function applyAuthSession(session, source = 'session') {
+            currentUser = session?.user || null;
+            updateAuthUI();
+
+            if (!currentUser) {
+                records = loadLocalRecords();
+                render();
+                if (source === 'SIGNED_OUT') showToast('已退出登录，当前为本地模式');
+                return;
+            }
+
+            try {
+                setSyncState(true);
+                await mergeLocalRecordsIntoCloud();
+                await refreshRecordsFromCloud();
+                if (source !== 'initial' && source !== 'INITIAL_SESSION') {
+                    showToast('已登录，云端同步已开启');
+                }
+            } catch (error) {
+                console.error(error);
+                showToast('云端同步失败，请稍后重试');
+            } finally {
+                setSyncState(false);
+            }
+        }
+
+        async function initSupabase() {
+            if (!window.supabase || typeof window.supabase.createClient !== 'function') {
+                showToast('Supabase 初始化失败');
+                return;
+            }
+            supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+                auth: {
+                    persistSession: true,
+                    autoRefreshToken: true,
+                    detectSessionInUrl: true
+                }
+            });
+
+            const { data, error } = await supabaseClient.auth.getSession();
+            if (error) {
+                console.error(error);
+                showToast('登录状态读取失败');
+            }
+            await applyAuthSession(data?.session || null, 'initial');
+
+            supabaseClient.auth.onAuthStateChange((event, session) => {
+                Promise.resolve(applyAuthSession(session, event)).catch(err => {
+                    console.error(err);
+                    showToast('同步状态更新失败');
+                });
+            });
+        }
+
+        async function signUpWithEmail() {
+            if (!supabaseClient) return showToast('登录服务尚未就绪');
+            const email = document.getElementById('auth-email')?.value.trim();
+            const password = document.getElementById('auth-password')?.value || '';
+            if (!email || !password) return showToast('请填写邮箱和密码');
+
+            const { data, error } = await supabaseClient.auth.signUp({
+                email,
+                password,
+                options: {
+                    emailRedirectTo: getAuthRedirectUrl()
+                }
+            });
+
+            if (error) {
+                showToast(error.message.includes('redirect') ? '请先在 Supabase 中配置邮箱跳转地址' : '注册失败，请检查邮箱或密码');
+                return;
+            }
+
+            if (data.session) {
+                showToast('注册并登录成功');
+            } else {
+                showToast('注册成功，请到邮箱完成确认');
+            }
+        }
+
+        async function signInWithEmail() {
+            if (!supabaseClient) return showToast('登录服务尚未就绪');
+            const email = document.getElementById('auth-email')?.value.trim();
+            const password = document.getElementById('auth-password')?.value || '';
+            if (!email || !password) return showToast('请填写邮箱和密码');
+
+            const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+            if (error) {
+                showToast('登录失败，请检查邮箱和密码');
+            }
+        }
+
+        async function signInWithGoogle() {
+            if (!supabaseClient) return showToast('登录服务尚未就绪');
+            const { error } = await supabaseClient.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: getAuthRedirectUrl()
+                }
+            });
+            if (error) {
+                showToast('Google 登录未完成配置，请先在 Supabase 控制台开启');
+            }
+        }
+
+        async function signOutUser() {
+            if (!supabaseClient) return showToast('登录服务尚未就绪');
+            const { error } = await supabaseClient.auth.signOut();
+            if (error) {
+                showToast('退出失败，请稍后重试');
+            }
+        }
 
         function shiftDate(offset) {
             viewDate.setDate(viewDate.getDate() + offset);
@@ -405,10 +888,12 @@
             const releaseDateEl = document.getElementById('app-release-date');
             const githubHeaderLink = document.getElementById('github-header-link');
             const githubFooterLink = document.getElementById('github-footer-link');
+            const releaseFooterLink = document.getElementById('release-footer-link');
             if (versionEl) versionEl.innerText = `v${appVersion}`;
             if (releaseDateEl) releaseDateEl.innerText = `发布于 ${appReleaseDate}`;
             if (githubHeaderLink) githubHeaderLink.href = githubRepoUrl;
             if (githubFooterLink) githubFooterLink.href = githubRepoUrl;
+            if (releaseFooterLink) releaseFooterLink.href = githubReleaseUrl;
         }
 
         function updateDateUI() {
@@ -675,19 +1160,20 @@
             });
         }
 
-        function getSupplementRecordsByDate(dateStr) {
+        function getSupplementRecordsByDate(targetDate) {
+            const dateKey = typeof targetDate === 'string' ? targetDate : getDateKey(targetDate);
             return records
-                .filter(r => r.cat === '补剂' && r.date === dateStr)
+                .filter(r => r.cat === '补剂' && getRecordDateKey(r) === dateKey)
                 .sort((a, b) => (a.time || '').localeCompare(b.time || ''));
         }
 
         function getSupplementStatus(targetDate) {
-            const dateStr = targetDate.toLocaleDateString();
-            const today = new Date().toLocaleDateString();
-            const isViewingToday = dateStr === today;
+            const dateKey = getDateKey(targetDate);
+            const todayKey = getDateKey(new Date());
+            const isViewingToday = dateKey === todayKey;
             const currentHour = new Date().getHours();
             const dayLabel = isViewingToday ? '今日' : '当日';
-            const supplementRecords = getSupplementRecordsByDate(dateStr);
+            const supplementRecords = getSupplementRecordsByDate(dateKey);
             const adDone = supplementRecords.some(r => r.type === 'AD');
             const d3Done = supplementRecords.some(r => r.type === 'D3');
 
@@ -747,7 +1233,7 @@
         }
 
         function toggleCategoryCollapse(cat) {
-            const targetDate = viewDate.toLocaleDateString();
+            const targetDate = getDateKey(viewDate);
             if (!collapsedCategories[targetDate]) {
                 collapsedCategories[targetDate] = {};
             }
@@ -797,22 +1283,39 @@
             addRecord('睡眠', cross ? '跨天睡眠' : '常规睡眠', sleepRecord.val, sleepRecord.raw, 'moon', 'sky', sleepRecord.time, sleepRecord.meta);
         }
 
-        function addRecord(cat, type, val, raw, icon, color, time, meta) {
-            records.unshift({
-                id: Date.now(),
+        async function addRecord(cat, type, val, raw, icon, color, time, meta) {
+            const nowIso = new Date().toISOString();
+            const record = normalizeRecord({
+                id: generateRecordId(),
+                dateKey: getDateKey(viewDate),
+                date: viewDate.toLocaleDateString(),
                 cat, type, val, raw,
                 icons: [icon],
                 color, time,
-                date: viewDate.toLocaleDateString(),
-                meta
+                meta,
+                createdAt: nowIso,
+                updatedAt: nowIso
             });
-            saveToStorage(); render(); showToast('记录成功');
+            records.unshift(record);
+            records = sortRecordsByRecent(records);
+            saveToStorage();
+            render();
+
+            try {
+                if (currentUser) {
+                    await persistRecordToCloud(record);
+                }
+                showToast('记录成功');
+            } catch (error) {
+                console.error(error);
+                showToast('记录已保存在本机，云端同步失败');
+            }
         }
 
         function render() {
             const list = document.getElementById('history-list');
-            const targetDate = viewDate.toLocaleDateString();
-            const dateRecs = records.filter(r => r.date === targetDate);
+            const targetDate = getDateKey(viewDate);
+            const dateRecs = records.filter(r => getRecordDateKey(r) === targetDate);
             const categoryOrder = ['喝奶', '排泄', '睡眠', '补剂'];
             const categoryMeta = {
                 '喝奶': { label: '喝奶记录', color: 'text-amber-500' },
@@ -888,22 +1391,13 @@
             lucide.createIcons();
         }
 
-        function parseRecordDate(dateStr) {
-            const date = new Date(dateStr);
+        function parseRecordDate(dateInput) {
+            if (!dateInput) return null;
+            if (typeof dateInput === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateInput)) {
+                return parseDateKey(dateInput);
+            }
+            const date = new Date(dateInput);
             return Number.isNaN(date.getTime()) ? null : date;
-        }
-
-        function startOfWeek(date) {
-            const d = new Date(date);
-            const day = d.getDay();
-            const diff = day === 0 ? -6 : 1 - day;
-            d.setDate(d.getDate() + diff);
-            d.setHours(0, 0, 0, 0);
-            return d;
-        }
-
-        function startOfQuarter(date) {
-            return new Date(date.getFullYear(), Math.floor(date.getMonth() / 3) * 3, 1);
         }
 
         function formatBucketLabel(range, start, end) {
@@ -948,7 +1442,7 @@
             }
 
             records.forEach(record => {
-                const date = parseRecordDate(record.date);
+                const date = parseRecordDate(getRecordDateKey(record));
                 if (!date) return;
                 date.setHours(0, 0, 0, 0);
                 const bucket = buckets.find(item => date >= item.start && date < item.end);
@@ -1029,6 +1523,7 @@
         }
 
         function openAnalysis() {
+            closeTopMenu();
             const overlay = document.getElementById('analysis-overlay');
             const panel = document.getElementById('analysis-panel');
             overlay.style.display = 'block';
@@ -1105,9 +1600,10 @@
             d3Btn.classList.toggle('active-yellow', type === 'D3');
         }
 
-        function updateRecord() {
+        async function updateRecord() {
             const idx = records.findIndex(x => x.id === editingRecordId);
             const r = records[idx];
+            if (!r) return;
             if(r.cat === '喝奶') {
                 const v = parseInt(document.getElementById('edit-val').value);
                 const s = document.getElementById('edit-s-time').value;
@@ -1130,11 +1626,41 @@
                 if (sleepRecord.error) return showToast(sleepRecord.error);
                 r.meta = sleepRecord.meta; r.val = sleepRecord.val; r.raw = sleepRecord.raw; r.time = sleepRecord.time;
             }
-            saveToStorage(); render(); closeEditPanel(); showToast('已更新');
+            r.updatedAt = new Date().toISOString();
+            records = sortRecordsByRecent(records);
+            saveToStorage();
+            render();
+            closeEditPanel();
+
+            try {
+                if (currentUser) {
+                    await persistRecordToCloud(r);
+                }
+                showToast('已更新');
+            } catch (error) {
+                console.error(error);
+                showToast('修改已保存在本机，云端同步失败');
+            }
         }
 
-        function deleteCurrentRecord() { if(confirm('确认删除？')) { records = records.filter(x => x.id !== editingRecordId); saveToStorage(); render(); closeEditPanel(); } }
-        function saveToStorage() { localStorage.setItem('baby_records_v13', JSON.stringify(records)); }
+        async function deleteCurrentRecord() {
+            if (!confirm('确认删除？')) return;
+            const deletingId = editingRecordId;
+            records = records.filter(x => x.id !== deletingId);
+            saveToStorage();
+            render();
+            closeEditPanel();
+
+            try {
+                if (currentUser) {
+                    await deleteRecordFromCloud(deletingId);
+                }
+                showToast('已删除');
+            } catch (error) {
+                console.error(error);
+                showToast('删除已保存在本机，云端同步失败');
+            }
+        }
 
         function csvEscape(value) {
             if (value === null || value === undefined) return '';
@@ -1181,6 +1707,7 @@
         function recordToCsvRow(r) {
             return [
                 r.id,
+                getRecordDateKey(r),
                 r.date,
                 r.cat,
                 r.type,
@@ -1215,8 +1742,9 @@
             if (data.meta_cross) meta.cross = data.meta_cross.toLowerCase() === 'true';
             if (data.meta_time) meta.time = data.meta_time;
 
-            return {
-                id: parseInt(data.id) || Date.now() + Math.floor(Math.random() * 100000),
+            return normalizeRecord({
+                id: data.id || generateRecordId(),
+                dateKey: data.date_key || '',
                 date: data.date,
                 cat: data.cat,
                 type: data.type,
@@ -1226,11 +1754,11 @@
                 color: data.color || 'slate',
                 time: data.time,
                 meta
-            };
+            });
         }
 
         function exportData() {
-            const headers = ['id', 'date', 'cat', 'type', 'val', 'raw', 'icon', 'color', 'time', 'meta_start', 'meta_end', 'meta_awake_start', 'meta_awake_end', 'meta_awake_minutes', 'meta_volume', 'meta_cross', 'meta_time'];
+            const headers = ['id', 'date_key', 'date', 'cat', 'type', 'val', 'raw', 'icon', 'color', 'time', 'meta_start', 'meta_end', 'meta_awake_start', 'meta_awake_end', 'meta_awake_minutes', 'meta_volume', 'meta_cross', 'meta_time'];
             const csv = [
                 headers.join(','),
                 ...records.map(record => recordToCsvRow(record).map(csvEscape).join(','))
@@ -1247,10 +1775,10 @@
             const file = event.target.files[0];
             event.target.value = '';
             if(!file) return;
-            if(!confirm('上传 CSV 会替换当前所有本地记录，继续吗？')) return;
+            if(!confirm(currentUser ? '上传 CSV 会替换当前账号的本地和云端记录，继续吗？' : '上传 CSV 会替换当前所有本地记录，继续吗？')) return;
 
             const reader = new FileReader();
-            reader.onload = () => {
+            reader.onload = async () => {
                 try {
                     const text = String(reader.result || '').replace(/^\uFEFF/, '');
                     const rows = parseCsv(text);
@@ -1261,44 +1789,73 @@
                     const hasRequiredHeaders = requiredHeaders.every(header => headers.includes(header));
                     if(!hasRequiredHeaders) throw new Error('headers');
 
-                    const imported = rows.slice(1).map(row => csvRowToRecord(headers, row)).filter(record => record.date && record.cat);
+                    const imported = rows.slice(1).map(row => csvRowToRecord(headers, row)).filter(record => getRecordDateKey(record) && record.cat);
                     if(!imported.length) throw new Error('records');
 
-                    records = imported;
+                    records = sortRecordsByRecent(imported);
                     saveToStorage();
+                    if (currentUser) {
+                        await replaceCloudRecords(records);
+                    }
                     render();
                     showToast(`已上传 ${records.length} 条记录`);
                 } catch (error) {
-                    showToast('CSV 格式不正确');
+                    console.error(error);
+                    showToast('CSV 导入失败，请检查格式或稍后重试');
                 }
             };
             reader.readAsText(file, 'utf-8');
         }
 
-        function clearAll() { if(confirm('确定清空所有数据？不可恢复。')) { records = []; saveToStorage(); render(); } }
+        async function clearAll() {
+            if (!confirm('确定清空所有数据？不可恢复。')) return;
+            records = [];
+            saveToStorage();
+            render();
+
+            try {
+                if (currentUser) {
+                    await replaceCloudRecords([]);
+                }
+                showToast('已清空');
+            } catch (error) {
+                console.error(error);
+                showToast('本机已清空，云端同步失败');
+            }
+        }
         function showToast(m) {
             const t = document.getElementById('toast'); t.innerText = m;
             t.style.opacity = '1'; t.style.transform = 'translateY(0) translateX(-50%)';
             setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateY(4px) translateX(-50%)'; }, 2000);
         }
 
-        window.onload = () => {
+        window.onload = async () => {
+            records = loadLocalRecords();
             updateAppMetaUI();
             updateBabyAgeUI();
             updateDateUI();
             setDefaultTimes();
             updateSleepAwakePanelState();
+            updateAuthUI();
             render();
             bindInputInteractions();
             document.addEventListener('keydown', handleEnterSubmit);
+            document.addEventListener('click', event => {
+                const panel = document.getElementById('top-menu-panel');
+                const trigger = event.target.closest('button[onclick="toggleTopMenu(event)"]');
+                if (trigger) return;
+                if (panel && panel.contains(event.target)) return;
+                closeTopMenu();
+            });
             ['sleep-start-time', 'sleep-end-time', 'sleep-awake-start-time', 'sleep-awake-end-time'].forEach(id => {
                 const input = document.getElementById(id);
                 if (input) input.addEventListener('input', updateSleepAwakePanelState);
             });
             const crossDayCheckbox = document.getElementById('sleep-cross-day');
             if (crossDayCheckbox) crossDayCheckbox.addEventListener('change', updateSleepAwakePanelState);
+            await initSupabase();
             setInterval(() => {
-                if (viewDate.toLocaleDateString() === new Date().toLocaleDateString()) {
+                if (getDateKey(viewDate) === getDateKey(new Date())) {
                     syncSupplementUI();
                 }
             }, 60000);
