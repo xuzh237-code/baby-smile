@@ -493,7 +493,7 @@
         <footer class="pt-2 pb-4 text-center space-y-2">
             <div class="text-[10px] font-bold text-slate-400 tracking-widest">项目版本</div>
             <div class="flex items-center justify-center gap-2 text-xs font-black text-slate-600">
-                <span id="app-version">v1.1.5</span>
+                <span id="app-version">v1.1.6</span>
                 <span class="text-slate-300">·</span>
                 <span id="app-release-date">发布于 2026-05-10</span>
             </div>
@@ -502,7 +502,7 @@
                     <i data-lucide="github" class="w-4 h-4"></i>
                     <span>GitHub 仓库</span>
                 </a>
-                <a id="release-footer-link" href="https://github.com/xuzh237-code/baby-smile/releases/tag/v1.1.5" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-slate-700">
+                <a id="release-footer-link" href="https://github.com/xuzh237-code/baby-smile/releases/tag/v1.1.6" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-slate-700">
                     <i data-lucide="tag" class="w-4 h-4"></i>
                     <span>Release</span>
                 </a>
@@ -680,6 +680,7 @@
                     <div>喝奶：八点半喝奶粉200毫升</div>
                     <div>排泄：下午两点二十便便</div>
                     <div>补剂：上午九点吃AD</div>
+                    <div>睡眠：晚上九点睡到早上七点半</div>
                 </div>
             </div>
             <div class="text-center space-y-2">
@@ -750,10 +751,10 @@
         const LOCAL_BIRTH_INFO_KEY = 'baby_birth_info_v1';
         const SUPABASE_URL = 'https://osclgqcupdgwhndoytgu.supabase.co';
         const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_q5emgRKwcyqgGzj7ztqQIw_bYcaBad6';
-        const appVersion = '1.1.5';
+        const appVersion = '1.1.6';
         const appReleaseDate = '2026-05-17';
         const githubRepoUrl = 'https://github.com/xuzh237-code/baby-smile';
-        const githubReleaseUrl = 'https://github.com/xuzh237-code/baby-smile/releases/tag/v1.1.5';
+        const githubReleaseUrl = 'https://github.com/xuzh237-code/baby-smile/releases/tag/v1.1.6';
         const defaultBabyBirthDate = new Date(2025, 9, 28, 0, 30);
         let babyBirthDate = new Date(defaultBabyBirthDate);
         let records = [];
@@ -1539,7 +1540,8 @@
             const labels = {
                 milk: '喝奶记录',
                 poop: '排泄记录',
-                supplement: '补剂记录'
+                supplement: '补剂记录',
+                sleep: '睡眠记录'
             };
             const detailMap = {
                 milk: [
@@ -1557,6 +1559,12 @@
                     ['类别', labels[mode]],
                     ['时间', parsed.time],
                     ['补剂', parsed.type]
+                ],
+                sleep: [
+                    ['类别', labels[mode]],
+                    ['入睡', parsed.start],
+                    ['醒来', parsed.end],
+                    ['模式', parsed.cross ? '跨天睡眠' : '常规睡眠']
                 ]
             };
 
@@ -1607,6 +1615,10 @@
             }
             if (mode === 'supplement') {
                 saveSupplement();
+                return;
+            }
+            if (mode === 'sleep') {
+                saveSleep();
             }
         }
 
@@ -1690,6 +1702,26 @@
             return null;
         }
 
+        function parseVoiceTimeRange(text) {
+            const normalized = normalizeVoiceText(text);
+            const separators = ['睡到', '睡至', '到', '~', '-', '—'];
+            for (const separator of separators) {
+                if (!normalized.includes(separator)) continue;
+                const [startPart, endPart] = normalized.split(separator);
+                if (!startPart || !endPart) continue;
+                const start = parseVoiceTime(startPart);
+                const end = parseVoiceTime(endPart);
+                if (start && end) {
+                    return {
+                        start,
+                        end,
+                        cross: normalized.includes('跨天') || normalized.includes('昨晚') || normalized.includes('夜里') || normalized.includes('夜间') || /早上|清晨|凌晨|早晨/.test(endPart) || timeToMinutes(end) <= timeToMinutes(start)
+                    };
+                }
+            }
+            return null;
+        }
+
         function detectVoiceMode(text) {
             const normalized = normalizeVoiceText(text);
             if (normalized.includes('奶粉') || normalized.includes('配方奶') || normalized.includes('母乳') || normalized.includes('喝奶')) {
@@ -1700,6 +1732,9 @@
             }
             if (normalized.includes('ad') || normalized.includes('AD') || normalized.includes('d3') || normalized.includes('D3') || normalized.includes('补剂')) {
                 return 'supplement';
+            }
+            if (normalized.includes('睡') || normalized.includes('入睡') || normalized.includes('醒来')) {
+                return 'sleep';
             }
             return '';
         }
@@ -1732,6 +1767,12 @@
                 return { time, type };
             }
 
+            if (mode === 'sleep') {
+                const range = parseVoiceTimeRange(normalized);
+                if (!range) return { error: '没听清睡眠起止时间，可以说“晚上九点睡到早上七点半”' };
+                return range;
+            }
+
             return { error: '暂不支持这类语音输入' };
         }
 
@@ -1757,6 +1798,16 @@
             if (mode === 'supplement') {
                 setSupplementType(parsed.type);
                 document.getElementById('supplement-time').value = parsed.time;
+                closeVoicePanel();
+                openVoiceConfirm(mode, parsed, transcript);
+                return;
+            }
+
+            if (mode === 'sleep') {
+                document.getElementById('sleep-start-time').value = parsed.start;
+                document.getElementById('sleep-end-time').value = parsed.end;
+                document.getElementById('sleep-cross-day').checked = !!parsed.cross;
+                updateSleepAwakePanelState();
                 closeVoicePanel();
                 openVoiceConfirm(mode, parsed, transcript);
             }
