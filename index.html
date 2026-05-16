@@ -57,7 +57,7 @@
             z-index: 51; padding-bottom: env(safe-area-inset-bottom);
             box-shadow: 0 -10px 40px rgba(0,0,0,0.05);
         }
-        #analysis-overlay, #edit-overlay, #auth-overlay, #birth-overlay {
+        #analysis-overlay, #edit-overlay, #auth-overlay, #birth-overlay, #voice-overlay, #voice-confirm-overlay {
             position: fixed; inset: 0; background: rgba(15, 23, 42, 0.3);
             backdrop-filter: blur(4px); z-index: 50; display: none;
         }
@@ -128,6 +128,155 @@
             padding-top: 0.15rem;
             padding-bottom: 0.15rem;
         }
+        .voice-bars {
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 6px;
+            height: 56px;
+        }
+        .voice-bar {
+            width: 7px;
+            border-radius: 999px;
+            background: linear-gradient(180deg, #fb7185 0%, #f97316 100%);
+            transform-origin: bottom;
+            opacity: 0.95;
+        }
+        .voice-bar:nth-child(1) { height: 18px; animation-delay: 0s; }
+        .voice-bar:nth-child(2) { height: 34px; animation-delay: 0.12s; }
+        .voice-bar:nth-child(3) { height: 48px; animation-delay: 0.24s; }
+        .voice-bar:nth-child(4) { height: 28px; animation-delay: 0.36s; }
+        .voice-bar:nth-child(5) { height: 42px; animation-delay: 0.48s; }
+        .voice-bar:nth-child(6) { height: 22px; animation-delay: 0.6s; }
+        .voice-bar:nth-child(7) { height: 38px; animation-delay: 0.72s; }
+        body.voice-listening .voice-bar {
+            animation: voicePulse 1s ease-in-out infinite;
+        }
+        body.voice-processing .voice-bar {
+            background: linear-gradient(180deg, #38bdf8 0%, #6366f1 100%);
+        }
+        .voice-fab-wrap {
+            position: fixed;
+            left: 50%;
+            bottom: calc(env(safe-area-inset-bottom) + 1rem);
+            transform: translateX(-50%);
+            width: min(100%, 28rem);
+            padding: 0 1rem;
+            z-index: 40;
+            pointer-events: none;
+            display: flex;
+            justify-content: center;
+        }
+        .voice-fab {
+            position: relative;
+            width: 72px;
+            height: 72px;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 999px;
+            background:
+                radial-gradient(circle at 30% 24%, rgba(255,255,255,0.88) 0%, rgba(255,255,255,0) 28%),
+                radial-gradient(circle at 74% 76%, rgba(125,211,252,0.22) 0%, rgba(125,211,252,0) 36%),
+                linear-gradient(145deg, #ffffff 0%, #f8fafc 52%, #eef2ff 100%);
+            color: #334155;
+            box-shadow:
+                0 18px 36px rgba(148, 163, 184, 0.22),
+                0 10px 26px rgba(125, 211, 252, 0.18),
+                0 6px 16px rgba(196, 181, 253, 0.16),
+                inset 0 1px 0 rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(226, 232, 240, 0.95);
+            pointer-events: auto;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease, filter 0.2s ease;
+            overflow: hidden;
+        }
+        .voice-fab::before {
+            content: '';
+            position: absolute;
+            inset: 2px;
+            border-radius: inherit;
+            background:
+                radial-gradient(circle at 50% 50%, rgba(255,255,255,0.52) 0%, rgba(255,255,255,0) 62%),
+                linear-gradient(135deg, rgba(255,255,255,0.65), rgba(255,255,255,0.08));
+            pointer-events: none;
+        }
+        .voice-fab i {
+            position: relative;
+            z-index: 1;
+            width: 30px;
+            height: 30px;
+            stroke-width: 2.2;
+            filter: drop-shadow(0 0 10px rgba(96, 165, 250, 0.18));
+        }
+        .voice-fab:active {
+            transform: scale(0.97);
+        }
+        body.voice-listening .voice-fab {
+            box-shadow:
+                0 20px 42px rgba(148, 163, 184, 0.24),
+                0 12px 32px rgba(96, 165, 250, 0.18),
+                0 10px 24px rgba(168, 85, 247, 0.12),
+                0 0 0 6px rgba(191, 219, 254, 0.45);
+            filter: saturate(1.03) brightness(1.02);
+        }
+        .voice-fab.voice-fab-disabled {
+            background: linear-gradient(145deg, #f8fafc 0%, #e2e8f0 100%);
+            color: #64748b;
+            box-shadow: 0 12px 28px rgba(148, 163, 184, 0.2);
+            border-color: rgba(226, 232, 240, 0.95);
+        }
+        #voice-panel {
+            max-height: min(88dvh, 42rem);
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: calc(env(safe-area-inset-bottom) + 1.5rem);
+        }
+        .voice-confirm-panel {
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            width: min(calc(100% - 2rem), 22rem);
+            transform: translate(-50%, calc(-50% + 12px));
+            background: white;
+            border-radius: 1.5rem;
+            box-shadow: 0 20px 50px rgba(15, 23, 42, 0.18);
+            z-index: 51;
+            padding: 1.25rem;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.22s ease, transform 0.22s ease;
+        }
+        .voice-confirm-panel.open {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translate(-50%, -50%);
+        }
+        .voice-confirm-detail {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            background: #f8fafc;
+            border-radius: 1rem;
+            padding: 0.8rem 0.9rem;
+        }
+        @media (max-width: 640px) {
+            #voice-panel {
+                max-height: calc(100dvh - 0.75rem);
+                padding: 1.25rem;
+                padding-bottom: calc(env(safe-area-inset-bottom) + 1.25rem);
+            }
+            .voice-confirm-panel {
+                width: calc(100% - 1.25rem);
+                border-radius: 1.35rem;
+                padding: 1rem;
+            }
+        }
+        @keyframes voicePulse {
+            0%, 100% { transform: scaleY(0.45); opacity: 0.55; }
+            50% { transform: scaleY(1); opacity: 1; }
+        }
         @keyframes categoryRecordsEnter {
             from {
                 opacity: 0;
@@ -187,21 +336,18 @@
                 </div>
             </div>
 
-            <div class="mb-3 bg-amber-50 border border-amber-100 rounded-2xl px-4 py-3 flex items-center justify-between gap-4 age-card">
-                <div class="flex items-center space-x-2">
-                    <div class="bg-amber-500/10 text-amber-500 p-2 rounded-xl">
-                        <i data-lucide="calendar-heart" class="w-4 h-4"></i>
-                    </div>
-                    <div>
-                        <div class="text-[10px] font-bold text-amber-600 tracking-widest age-label">出生天数</div>
-                        <div id="baby-age-days" class="text-sm font-black text-slate-800 age-value">0 天</div>
-                        <div id="baby-birth-date" class="text-[10px] font-bold text-slate-400 mt-0.5 age-subtext">2025.10.28 00:30 出生</div>
-                    </div>
+            <div class="mb-2 bg-amber-50 border border-amber-100 rounded-2xl px-4 py-2.5 flex items-center justify-between gap-3 age-card">
+                <div class="flex items-baseline gap-1.5 min-w-0">
+                    <span class="text-[10px] font-bold text-amber-600 tracking-widest age-label">出生天数</span>
+                    <span id="baby-age-days" class="text-sm font-black text-slate-800 leading-tight age-value">0 天</span>
                 </div>
-                <div class="flex flex-col items-end text-right">
-                    <div class="text-[10px] font-bold text-amber-600 tracking-widest mb-1 age-label">成长阶段</div>
-                    <div id="baby-age-months" class="text-sm font-black text-slate-800 age-value">0 月龄 + 0 天</div>
-                    <div id="baby-age-week-label" class="text-[10px] font-black text-slate-400 mt-0.5 age-subtext">第 0 周</div>
+                <div class="flex items-baseline gap-1.5 min-w-0">
+                    <span class="text-[10px] font-bold text-amber-600 tracking-widest age-label">月龄</span>
+                    <span id="baby-age-months" class="text-sm font-black text-slate-800 leading-tight age-value">0 月龄 + 0 天</span>
+                </div>
+                <div class="flex items-baseline gap-1.5 min-w-0">
+                    <span class="text-[10px] font-bold text-amber-600 tracking-widest age-label">周数</span>
+                    <span id="baby-age-week-label" class="text-[10px] font-black text-slate-500 leading-tight age-subtext">第 0 周</span>
                 </div>
             </div>
 
@@ -218,7 +364,7 @@
     </header>
     <input id="csv-upload" type="file" accept=".csv,text/csv" class="hidden" onchange="importData(event)">
 
-    <main id="swipe-area" class="max-w-md mx-auto p-4 space-y-6">
+    <main id="swipe-area" class="max-w-md mx-auto p-4 space-y-6 pb-28">
         <section class="grid grid-cols-3 gap-3">
             <div class="bg-white p-4 rounded-3xl card-shadow border border-slate-50 flex flex-col items-center">
                 <span class="text-[10px] font-bold text-slate-400 mb-1">当日奶量</span>
@@ -347,7 +493,7 @@
         <footer class="pt-2 pb-4 text-center space-y-2">
             <div class="text-[10px] font-bold text-slate-400 tracking-widest">项目版本</div>
             <div class="flex items-center justify-center gap-2 text-xs font-black text-slate-600">
-                <span id="app-version">v1.1.4</span>
+                <span id="app-version">v1.1.5</span>
                 <span class="text-slate-300">·</span>
                 <span id="app-release-date">发布于 2026-05-10</span>
             </div>
@@ -356,13 +502,19 @@
                     <i data-lucide="github" class="w-4 h-4"></i>
                     <span>GitHub 仓库</span>
                 </a>
-                <a id="release-footer-link" href="https://github.com/xuzh237-code/baby-smile/releases/tag/v1.1.4" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-slate-700">
+                <a id="release-footer-link" href="https://github.com/xuzh237-code/baby-smile/releases/tag/v1.1.5" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-slate-700">
                     <i data-lucide="tag" class="w-4 h-4"></i>
                     <span>Release</span>
                 </a>
             </div>
         </footer>
     </main>
+
+    <div class="voice-fab-wrap">
+        <button id="voice-btn-global" onclick="startVoiceInput()" class="voice-fab" aria-label="语音输入">
+            <i data-lucide="mic" class="w-6 h-6"></i>
+        </button>
+    </div>
 
     <div id="analysis-overlay" onclick="closeAnalysis()"></div>
     <div id="analysis-panel" class="bottom-panel p-6 overflow-y-auto" style="max-height: 90vh;">
@@ -510,6 +662,72 @@
         </div>
     </div>
 
+    <div id="voice-overlay" onclick="closeVoicePanel()"></div>
+    <div id="voice-panel" class="bottom-panel p-6 overflow-y-auto">
+        <div class="flex justify-between items-center mb-6">
+            <div class="flex items-center gap-2">
+                <div class="text-rose-500">
+                    <i data-lucide="mic" class="w-5 h-5"></i>
+                </div>
+                <h3 class="text-lg font-black text-slate-800">语音输入</h3>
+            </div>
+            <button onclick="stopVoiceInput(true)" class="p-2 bg-slate-100 rounded-full"><i data-lucide="x" class="w-4 h-4"></i></button>
+        </div>
+        <div class="space-y-5">
+            <div class="bg-slate-50 rounded-2xl px-4 py-4 space-y-2">
+                <div class="text-[10px] font-bold text-slate-400 tracking-widest">可以这样说</div>
+                <div class="space-y-1 text-xs font-bold text-slate-600">
+                    <div>喝奶：八点半喝奶粉200毫升</div>
+                    <div>排泄：下午两点二十便便</div>
+                    <div>补剂：上午九点吃AD</div>
+                </div>
+            </div>
+            <div class="text-center space-y-2">
+                <div id="voice-status-text" class="text-sm font-black text-slate-800">准备开始</div>
+                <div id="voice-status-hint" class="text-[11px] font-bold text-slate-400">请说，比如：八点半喝奶粉200毫升</div>
+            </div>
+            <div class="bg-slate-50 rounded-[1.5rem] px-6 py-5">
+                <div class="voice-bars">
+                    <span class="voice-bar"></span>
+                    <span class="voice-bar"></span>
+                    <span class="voice-bar"></span>
+                    <span class="voice-bar"></span>
+                    <span class="voice-bar"></span>
+                    <span class="voice-bar"></span>
+                    <span class="voice-bar"></span>
+                </div>
+            </div>
+            <div class="bg-white border border-slate-100 rounded-2xl px-4 py-4 min-h-[88px]">
+                <div class="text-[10px] font-bold text-slate-400 tracking-widest mb-2">识别内容</div>
+                <div id="voice-transcript-text" class="text-sm font-black text-slate-700 leading-6">等待语音输入…</div>
+            </div>
+            <div class="flex space-x-3">
+                <button onclick="stopVoiceInput(true)" class="flex-1 h-12 bg-slate-100 text-slate-500 rounded-2xl font-black">取消</button>
+                <button id="voice-retry-btn" onclick="restartVoiceInput()" class="flex-1 h-12 bg-rose-500 text-white rounded-2xl font-black">重试</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="voice-confirm-overlay" onclick="closeVoiceConfirm()"></div>
+    <div id="voice-confirm-panel" class="voice-confirm-panel">
+        <div class="flex items-center justify-between gap-3 mb-4">
+            <div>
+                <div class="text-[10px] font-bold text-rose-500 tracking-widest">识别结果</div>
+                <div class="text-lg font-black text-slate-800 mt-1">这样记录对吗？</div>
+            </div>
+            <button onclick="closeVoiceConfirm()" class="p-2 bg-slate-100 rounded-full">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+        </div>
+        <div id="voice-confirm-summary" class="text-sm font-bold text-slate-500 mb-4 leading-6">已识别一条记录</div>
+        <div id="voice-confirm-details" class="space-y-2 mb-5"></div>
+        <div class="grid grid-cols-3 gap-2">
+            <button onclick="closeVoiceConfirm()" class="h-12 rounded-2xl bg-slate-100 text-slate-500 text-sm font-black">取消</button>
+            <button onclick="retryVoiceFromConfirm()" class="h-12 rounded-2xl bg-slate-900 text-white text-sm font-black">重说</button>
+            <button onclick="confirmVoiceRecord()" class="h-12 rounded-2xl bg-rose-500 text-white text-sm font-black shadow-lg shadow-rose-100">确认</button>
+        </div>
+    </div>
+
     <div id="edit-overlay" onclick="closeEditPanel()"></div>
     <div id="edit-panel" class="bottom-panel p-6">
         <div class="flex justify-between items-center mb-6">
@@ -532,10 +750,10 @@
         const LOCAL_BIRTH_INFO_KEY = 'baby_birth_info_v1';
         const SUPABASE_URL = 'https://osclgqcupdgwhndoytgu.supabase.co';
         const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_q5emgRKwcyqgGzj7ztqQIw_bYcaBad6';
-        const appVersion = '1.1.4';
-        const appReleaseDate = '2026-05-10';
+        const appVersion = '1.1.5';
+        const appReleaseDate = '2026-05-17';
         const githubRepoUrl = 'https://github.com/xuzh237-code/baby-smile';
-        const githubReleaseUrl = 'https://github.com/xuzh237-code/baby-smile/releases/tag/v1.1.4';
+        const githubReleaseUrl = 'https://github.com/xuzh237-code/baby-smile/releases/tag/v1.1.5';
         const defaultBabyBirthDate = new Date(2025, 9, 28, 0, 30);
         let babyBirthDate = new Date(defaultBabyBirthDate);
         let records = [];
@@ -551,6 +769,11 @@
         let currentUser = null;
         let isSyncingRecords = false;
         let isTopMenuOpen = false;
+        let supportsVoiceInput = false;
+        let voiceRecognition = null;
+        let isVoicePanelOpen = false;
+        let pendingVoiceRecord = null;
+        let hasManualAnalysisSelection = false;
 
         let touchStartX = 0;
         const swipeArea = document.getElementById('swipe-area');
@@ -1198,6 +1421,411 @@
             document.body.classList.toggle('keyboard-open', heightDiff > 140);
         }
 
+        function getSpeechRecognitionConstructor() {
+            return window.SpeechRecognition || window.webkitSpeechRecognition || null;
+        }
+
+        function updateVoiceInputUI() {
+            supportsVoiceInput = !!getSpeechRecognitionConstructor();
+            const button = document.getElementById('voice-btn-global');
+            if (!button) return;
+            button.classList.remove('hidden');
+            button.classList.toggle('voice-fab-disabled', !supportsVoiceInput);
+            button.setAttribute('aria-disabled', supportsVoiceInput ? 'false' : 'true');
+            const title = supportsVoiceInput ? '语音输入' : '当前浏览器暂不支持语音输入';
+            button.title = title;
+            button.setAttribute('aria-label', title);
+        }
+
+        function setVoicePanelState(status, transcript = '') {
+            const statusText = document.getElementById('voice-status-text');
+            const hintText = document.getElementById('voice-status-hint');
+            const transcriptText = document.getElementById('voice-transcript-text');
+            const retryBtn = document.getElementById('voice-retry-btn');
+
+            const states = {
+                idle: {
+                    title: '准备开始',
+                    hint: '请说，比如：八点半喝奶粉200毫升',
+                    transcript: '等待语音输入…',
+                    processing: false
+                },
+                listening: {
+                    title: '正在听…',
+                    hint: '说完后稍等一下，我会帮你识别',
+                    transcript: transcript || '正在听你说话…',
+                    processing: false
+                },
+                processing: {
+                    title: '正在识别…',
+                    hint: '我在整理你刚才说的话',
+                    transcript: transcript || '正在处理语音内容…',
+                    processing: true
+                },
+                done: {
+                    title: '识别完成',
+                    hint: '如果不对，可以点重试再说一次',
+                    transcript: transcript || '已完成识别',
+                    processing: false
+                },
+                error: {
+                    title: '这次没听清',
+                    hint: '可以点重试再说一次',
+                    transcript: transcript || '请再说一次',
+                    processing: false
+                }
+            };
+
+            const current = states[status] || states.idle;
+            if (statusText) statusText.innerText = current.title;
+            if (hintText) hintText.innerText = current.hint;
+            if (transcriptText) transcriptText.innerText = current.transcript;
+            document.body.classList.toggle('voice-processing', !!current.processing);
+            document.body.classList.toggle('voice-listening', status === 'listening');
+            if (retryBtn) retryBtn.innerText = status === 'listening' ? '重新说' : '重试';
+        }
+
+        function openVoicePanel() {
+            const overlay = document.getElementById('voice-overlay');
+            const panel = document.getElementById('voice-panel');
+            if (!overlay || !panel) return;
+            isVoicePanelOpen = true;
+            overlay.style.display = 'block';
+            setTimeout(() => {
+                overlay.style.opacity = '1';
+                panel.style.transform = 'translateY(0)';
+            }, 10);
+        }
+
+        function closeVoicePanel() {
+            const overlay = document.getElementById('voice-overlay');
+            const panel = document.getElementById('voice-panel');
+            if (!overlay || !panel) return;
+            isVoicePanelOpen = false;
+            overlay.style.opacity = '0';
+            panel.style.transform = 'translateY(100%)';
+            setTimeout(() => {
+                overlay.style.display = 'none';
+            }, 300);
+            document.body.classList.remove('voice-processing');
+            document.body.classList.remove('voice-listening');
+        }
+
+        function stopVoiceInput(shouldClose = false) {
+            if (voiceRecognition) {
+                try { voiceRecognition.abort(); } catch (error) {}
+                voiceRecognition = null;
+            }
+            if (shouldClose) {
+                closeVoicePanel();
+            } else {
+                setVoicePanelState('idle');
+            }
+        }
+
+        function restartVoiceInput() {
+            stopVoiceInput(false);
+            startVoiceInput();
+        }
+
+        function openVoiceConfirm(mode, parsed, transcript) {
+            pendingVoiceRecord = { mode, parsed, transcript };
+            const overlay = document.getElementById('voice-confirm-overlay');
+            const panel = document.getElementById('voice-confirm-panel');
+            const summary = document.getElementById('voice-confirm-summary');
+            const details = document.getElementById('voice-confirm-details');
+            if (!overlay || !panel || !summary || !details) return;
+
+            const labels = {
+                milk: '喝奶记录',
+                poop: '排泄记录',
+                supplement: '补剂记录'
+            };
+            const detailMap = {
+                milk: [
+                    ['类别', labels[mode]],
+                    ['时间', parsed.time],
+                    ['类型', parsed.type],
+                    ['奶量', `${parsed.volume} ml`]
+                ],
+                poop: [
+                    ['类别', labels[mode]],
+                    ['时间', parsed.time],
+                    ['类型', parsed.type]
+                ],
+                supplement: [
+                    ['类别', labels[mode]],
+                    ['时间', parsed.time],
+                    ['补剂', parsed.type]
+                ]
+            };
+
+            summary.innerText = `识别到这条${labels[mode] || '记录'}，确认后会直接保存。`;
+            details.innerHTML = (detailMap[mode] || []).map(([label, value]) => `
+                <div class="voice-confirm-detail">
+                    <span class="text-[11px] font-bold text-slate-400 tracking-widest">${label}</span>
+                    <span class="text-sm font-black text-slate-800 text-right">${value}</span>
+                </div>
+            `).join('');
+
+            overlay.style.display = 'block';
+            setTimeout(() => {
+                overlay.style.opacity = '1';
+                panel.classList.add('open');
+            }, 10);
+            lucide.createIcons();
+        }
+
+        function closeVoiceConfirm() {
+            const overlay = document.getElementById('voice-confirm-overlay');
+            const panel = document.getElementById('voice-confirm-panel');
+            if (!overlay || !panel) return;
+            overlay.style.opacity = '0';
+            panel.classList.remove('open');
+            setTimeout(() => {
+                overlay.style.display = 'none';
+            }, 220);
+            pendingVoiceRecord = null;
+        }
+
+        function retryVoiceFromConfirm() {
+            closeVoiceConfirm();
+            setTimeout(() => startVoiceInput(), 120);
+        }
+
+        function confirmVoiceRecord() {
+            if (!pendingVoiceRecord) return;
+            const { mode } = pendingVoiceRecord;
+            closeVoiceConfirm();
+            if (mode === 'milk') {
+                saveMilk();
+                return;
+            }
+            if (mode === 'poop') {
+                savePoop();
+                return;
+            }
+            if (mode === 'supplement') {
+                saveSupplement();
+            }
+        }
+
+        function normalizeVoiceText(text) {
+            return String(text || '')
+                .replace(/\s+/g, '')
+                .replace(/：/g, ':')
+                .replace(/，|。|！|？/g, '');
+        }
+
+        function chineseDigitsToNumber(text) {
+            const chars = { 零: 0, 一: 1, 二: 2, 两: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9 };
+            if (!text) return NaN;
+            if (/^\d+$/.test(text)) return parseInt(text, 10);
+            if (text === '十') return 10;
+            if (text.includes('百')) {
+                const [hundredsText, restText = ''] = text.split('百');
+                const hundreds = hundredsText ? (chars[hundredsText] ?? 1) : 1;
+                return hundreds * 100 + (restText ? chineseDigitsToNumber(restText) : 0);
+            }
+            if (text.includes('十')) {
+                const [tensText, onesText = ''] = text.split('十');
+                const tens = tensText ? (chars[tensText] ?? 1) : 1;
+                const ones = onesText ? (chars[onesText] ?? 0) : 0;
+                return tens * 10 + ones;
+            }
+            return text.split('').reduce((acc, char) => acc * 10 + (chars[char] ?? 0), 0);
+        }
+
+        function parseVoiceTime(text) {
+            const normalized = normalizeVoiceText(text);
+            let match = normalized.match(/(\d{1,2})[:点](\d{1,2})/);
+            if (match) {
+                let hour = parseInt(match[1], 10);
+                let minute = parseInt(match[2], 10);
+                if (normalized.includes('下午') || normalized.includes('晚上') || normalized.includes('傍晚')) {
+                    if (hour < 12) hour += 12;
+                }
+                if (normalized.includes('凌晨') && hour === 12) hour = 0;
+                return `${padNumber(hour)}:${padNumber(minute)}`;
+            }
+
+            match = normalized.match(/(\d{1,2})点半/);
+            if (match) {
+                let hour = parseInt(match[1], 10);
+                if (normalized.includes('下午') || normalized.includes('晚上') || normalized.includes('傍晚')) {
+                    if (hour < 12) hour += 12;
+                }
+                return `${padNumber(hour)}:30`;
+            }
+
+            match = normalized.match(/([零一二两三四五六七八九十百]+)点半/);
+            if (match) {
+                let hour = chineseDigitsToNumber(match[1]);
+                if (normalized.includes('下午') || normalized.includes('晚上') || normalized.includes('傍晚')) {
+                    if (hour < 12) hour += 12;
+                }
+                return `${padNumber(hour)}:30`;
+            }
+
+            match = normalized.match(/([零一二两三四五六七八九十百]+)点([零一二两三四五六七八九十百]+)?/);
+            if (match) {
+                let hour = chineseDigitsToNumber(match[1]);
+                let minute = match[2] ? chineseDigitsToNumber(match[2]) : 0;
+                if (normalized.includes('下午') || normalized.includes('晚上') || normalized.includes('傍晚')) {
+                    if (hour < 12) hour += 12;
+                }
+                if (normalized.includes('凌晨') && hour === 12) hour = 0;
+                return `${padNumber(hour)}:${padNumber(minute)}`;
+            }
+
+            return '';
+        }
+
+        function parseVoiceVolume(text) {
+            const normalized = normalizeVoiceText(text);
+            let match = normalized.match(/(\d{2,4})(?:ml|毫升)/i);
+            if (match) return parseInt(match[1], 10);
+            match = normalized.match(/([零一二两三四五六七八九十百]+)(?:ml|毫升)/i);
+            if (match) return chineseDigitsToNumber(match[1]);
+            return null;
+        }
+
+        function detectVoiceMode(text) {
+            const normalized = normalizeVoiceText(text);
+            if (normalized.includes('奶粉') || normalized.includes('配方奶') || normalized.includes('母乳') || normalized.includes('喝奶')) {
+                return 'milk';
+            }
+            if (normalized.includes('尿尿') || normalized.includes('便便')) {
+                return 'poop';
+            }
+            if (normalized.includes('ad') || normalized.includes('AD') || normalized.includes('d3') || normalized.includes('D3') || normalized.includes('补剂')) {
+                return 'supplement';
+            }
+            return '';
+        }
+
+        function parseVoiceResult(mode, transcript) {
+            const normalized = normalizeVoiceText(transcript);
+            const time = parseVoiceTime(normalized) || new Date().toTimeString().slice(0, 5);
+
+            if (mode === 'milk') {
+                const volume = parseVoiceVolume(normalized);
+                const type = normalized.includes('奶粉') || normalized.includes('配方奶')
+                    ? '配方奶'
+                    : (normalized.includes('母乳') ? '瓶喂母乳' : '');
+                if (!volume) return { error: '没听清奶量，可以说“200毫升”' };
+                if (!type) return { error: '没听清是母乳还是奶粉' };
+                return { time, volume, type };
+            }
+
+            if (mode === 'poop') {
+                const hasPee = normalized.includes('尿尿');
+                const hasPoop = normalized.includes('便便');
+                const type = hasPee && hasPoop ? '尿尿+便便' : (hasPoop ? '便便' : (hasPee ? '尿尿' : ''));
+                if (!type) return { error: '没听清是尿尿还是便便' };
+                return { time, type };
+            }
+
+            if (mode === 'supplement') {
+                const type = normalized.includes('d3') || normalized.includes('D3') ? 'D3' : (normalized.includes('ad') || normalized.includes('AD') ? 'AD' : '');
+                if (!type) return { error: '没听清是 AD 还是 D3' };
+                return { time, type };
+            }
+
+            return { error: '暂不支持这类语音输入' };
+        }
+
+        function applyVoiceResult(mode, parsed, transcript) {
+            if (mode === 'milk') {
+                setMilkType(parsed.type);
+                document.getElementById('milk-volume').value = parsed.volume;
+                document.getElementById('milk-start-time').value = parsed.time;
+                document.getElementById('milk-end-time').value = parsed.time;
+                closeVoicePanel();
+                openVoiceConfirm(mode, parsed, transcript);
+                return;
+            }
+
+            if (mode === 'poop') {
+                setPoopType(parsed.type);
+                document.getElementById('poop-time').value = parsed.time;
+                closeVoicePanel();
+                openVoiceConfirm(mode, parsed, transcript);
+                return;
+            }
+
+            if (mode === 'supplement') {
+                setSupplementType(parsed.type);
+                document.getElementById('supplement-time').value = parsed.time;
+                closeVoicePanel();
+                openVoiceConfirm(mode, parsed, transcript);
+            }
+        }
+
+        function startVoiceInput() {
+            const SpeechRecognition = getSpeechRecognitionConstructor();
+            if (!SpeechRecognition) {
+                showToast('当前浏览器不支持语音输入');
+                return;
+            }
+
+            if (voiceRecognition) {
+                try { voiceRecognition.abort(); } catch (error) {}
+            }
+
+            openVoicePanel();
+            setVoicePanelState('listening');
+
+            voiceRecognition = new SpeechRecognition();
+            voiceRecognition.lang = 'zh-CN';
+            voiceRecognition.interimResults = false;
+            voiceRecognition.maxAlternatives = 1;
+
+            voiceRecognition.onstart = () => {
+                setVoicePanelState('listening');
+            };
+
+            voiceRecognition.onresult = event => {
+                const transcript = event.results?.[0]?.[0]?.transcript || '';
+                 setVoicePanelState('processing', transcript);
+                const mode = detectVoiceMode(transcript);
+                if (!mode) {
+                    setVoicePanelState('error', transcript || '没听清是哪类记录');
+                    showToast('没听清是哪类记录，可以说“喝奶粉200毫升”');
+                    return;
+                }
+                const parsed = parseVoiceResult(mode, transcript);
+                if (parsed.error) {
+                    setVoicePanelState('error', transcript || parsed.error);
+                    showToast(parsed.error);
+                    return;
+                }
+                setVoicePanelState('done', transcript);
+                applyVoiceResult(mode, parsed, transcript);
+            };
+
+            voiceRecognition.onerror = event => {
+                const messageMap = {
+                    'not-allowed': '没有麦克风权限',
+                    'no-speech': '没有听清，请再说一次',
+                    'audio-capture': '没有检测到麦克风',
+                    'network': '语音识别网络异常'
+                };
+                const message = messageMap[event.error] || '语音识别失败';
+                setVoicePanelState('error', message);
+                showToast(message);
+            };
+
+            voiceRecognition.onend = () => {
+                voiceRecognition = null;
+                if (isVoicePanelOpen) {
+                    document.body.classList.remove('voice-processing');
+                }
+            };
+
+            voiceRecognition.start();
+        }
+
         function bindInputInteractions(root = document) {
             root.querySelectorAll('input[type="text"], input[type="number"], input[type="email"], input[type="password"], input[type="date"], input[type="time"]').forEach(input => {
                 if (input.dataset.boundInteractions === 'true') return;
@@ -1735,6 +2363,7 @@
 
         function selectAnalysisBucket(index) {
             selectedAnalysisBucketIndex = index;
+            hasManualAnalysisSelection = true;
             renderAnalysis();
         }
 
@@ -1801,7 +2430,7 @@
                             width="${barWidth}"
                             height="${Math.max((item.milk / maxMilk) * h, 2)}"
                             rx="4"
-                            fill="#fbbf24"
+                            fill="${hasManualAnalysisSelection && selectedAnalysisBucketIndex !== i ? '#cbd5e1' : '#fbbf24'}"
                             opacity="0.85"
                         />
                         <rect
@@ -1810,7 +2439,7 @@
                             width="${barWidth}"
                             height="${Math.max((item.sleep / maxSleep) * h, 2)}"
                             rx="4"
-                            fill="#38bdf8"
+                            fill="${hasManualAnalysisSelection && selectedAnalysisBucketIndex !== i ? '#94a3b8' : '#38bdf8'}"
                             opacity="0.9"
                         />
                         ${(i % labelEvery === 0 || i === buckets.length - 1) ? `<text x="${i * groupWidth + groupWidth / 2}" y="${h + 20}" text-anchor="middle" class="text-[8px] fill-slate-300 font-bold">${item.label}</text>` : ''}
@@ -1835,6 +2464,7 @@
 
         function setAnalysisRange(range) {
             analysisRange = range;
+            hasManualAnalysisSelection = false;
             renderAnalysis();
         }
 
@@ -1843,6 +2473,7 @@
             const overlay = document.getElementById('analysis-overlay');
             const panel = document.getElementById('analysis-panel');
             overlay.style.display = 'block';
+            hasManualAnalysisSelection = false;
             renderAnalysis();
             setTimeout(() => { overlay.style.opacity = '1'; panel.style.transform = 'translateY(0)'; }, 10);
         }
@@ -2151,6 +2782,7 @@
             updateAppMetaUI();
             updateBabyAgeUI();
             updateDateUI();
+            updateVoiceInputUI();
             setDefaultTimes();
             updateSleepAwakePanelState();
             updateAuthUI();
