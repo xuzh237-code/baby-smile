@@ -493,7 +493,7 @@
         <footer class="pt-2 pb-4 text-center space-y-2">
             <div class="text-[10px] font-bold text-slate-400 tracking-widest">项目版本</div>
             <div class="flex items-center justify-center gap-2 text-xs font-black text-slate-600">
-                <span id="app-version">v1.1.6</span>
+                <span id="app-version">v1.1.7</span>
                 <span class="text-slate-300">·</span>
                 <span id="app-release-date">发布于 2026-05-10</span>
             </div>
@@ -502,7 +502,7 @@
                     <i data-lucide="github" class="w-4 h-4"></i>
                     <span>GitHub 仓库</span>
                 </a>
-                <a id="release-footer-link" href="https://github.com/xuzh237-code/baby-smile/releases/tag/v1.1.6" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-slate-700">
+                <a id="release-footer-link" href="https://github.com/xuzh237-code/baby-smile/releases/tag/v1.1.7" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-slate-700">
                     <i data-lucide="tag" class="w-4 h-4"></i>
                     <span>Release</span>
                 </a>
@@ -721,7 +721,7 @@
             </button>
         </div>
         <div id="voice-confirm-summary" class="text-sm font-bold text-slate-500 mb-4 leading-6">已识别一条记录</div>
-        <div id="voice-confirm-details" class="space-y-2 mb-5"></div>
+        <div id="voice-confirm-form" class="space-y-3 mb-5"></div>
         <div class="grid grid-cols-3 gap-2">
             <button onclick="closeVoiceConfirm()" class="h-12 rounded-2xl bg-slate-100 text-slate-500 text-sm font-black">取消</button>
             <button onclick="retryVoiceFromConfirm()" class="h-12 rounded-2xl bg-slate-900 text-white text-sm font-black">重说</button>
@@ -751,10 +751,10 @@
         const LOCAL_BIRTH_INFO_KEY = 'baby_birth_info_v1';
         const SUPABASE_URL = 'https://osclgqcupdgwhndoytgu.supabase.co';
         const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_q5emgRKwcyqgGzj7ztqQIw_bYcaBad6';
-        const appVersion = '1.1.6';
+        const appVersion = '1.1.7';
         const appReleaseDate = '2026-05-17';
         const githubRepoUrl = 'https://github.com/xuzh237-code/baby-smile';
-        const githubReleaseUrl = 'https://github.com/xuzh237-code/baby-smile/releases/tag/v1.1.6';
+        const githubReleaseUrl = 'https://github.com/xuzh237-code/baby-smile/releases/tag/v1.1.7';
         const defaultBabyBirthDate = new Date(2025, 9, 28, 0, 30);
         let babyBirthDate = new Date(defaultBabyBirthDate);
         let records = [];
@@ -1529,13 +1529,146 @@
             startVoiceInput();
         }
 
+        function renderVoiceConfirmFields(mode, parsed) {
+            const form = document.getElementById('voice-confirm-form');
+            if (!form) return;
+
+            if (mode === 'milk') {
+                form.innerHTML = `
+                    <div class="space-y-1">
+                        <span class="text-[10px] font-bold text-slate-400 tracking-widest">时间</span>
+                        <input id="voice-confirm-time" type="text" inputmode="numeric" value="${parsed.time}" class="manual-input-base manual-time-input" onblur="formatTimeInput(this)">
+                    </div>
+                    <div class="space-y-1">
+                        <span class="text-[10px] font-bold text-slate-400 tracking-widest">类型</span>
+                        <div class="tab-group">
+                            <button type="button" id="voice-confirm-milk-breast" onclick="setVoiceConfirmMilkType('瓶喂母乳')" class="tab-btn ${parsed.type === '瓶喂母乳' ? 'active-yellow' : ''}">瓶喂母乳</button>
+                            <button type="button" id="voice-confirm-milk-formula" onclick="setVoiceConfirmMilkType('配方奶')" class="tab-btn ${parsed.type === '配方奶' ? 'active-yellow' : ''}">配方奶</button>
+                        </div>
+                        <input id="voice-confirm-type" type="hidden" value="${parsed.type}">
+                    </div>
+                    <div class="space-y-1">
+                        <span class="text-[10px] font-bold text-slate-400 tracking-widest">奶量</span>
+                        <div class="relative">
+                            <input id="voice-confirm-volume" type="number" inputmode="numeric" value="${parsed.volume}" class="manual-input-base manual-volume-input">
+                            <span class="absolute right-5 top-1/2 -translate-y-1/2 text-slate-300 font-bold">ml</span>
+                        </div>
+                    </div>
+                `;
+            } else if (mode === 'poop') {
+                form.innerHTML = `
+                    <div class="space-y-1">
+                        <span class="text-[10px] font-bold text-slate-400 tracking-widest">时间</span>
+                        <input id="voice-confirm-time" type="text" inputmode="numeric" value="${parsed.time}" class="manual-input-base manual-time-input" onblur="formatTimeInput(this)">
+                    </div>
+                    <div class="space-y-1">
+                        <span class="text-[10px] font-bold text-slate-400 tracking-widest">类型</span>
+                        <div class="tab-group">
+                            <button type="button" id="voice-confirm-poop-pee" onclick="setVoiceConfirmSimpleType('voice-confirm-type', '尿尿', 'green')" class="tab-btn ${parsed.type === '尿尿' ? 'active-green' : ''}">尿尿</button>
+                            <button type="button" id="voice-confirm-poop-poop" onclick="setVoiceConfirmSimpleType('voice-confirm-type', '便便', 'green')" class="tab-btn ${parsed.type === '便便' ? 'active-green' : ''}">便便</button>
+                            <button type="button" id="voice-confirm-poop-both" onclick="setVoiceConfirmSimpleType('voice-confirm-type', '尿尿+便便', 'green')" class="tab-btn ${parsed.type === '尿尿+便便' ? 'active-green' : ''}">都要</button>
+                        </div>
+                        <input id="voice-confirm-type" type="hidden" value="${parsed.type}">
+                    </div>
+                `;
+            } else if (mode === 'supplement') {
+                form.innerHTML = `
+                    <div class="space-y-1">
+                        <span class="text-[10px] font-bold text-slate-400 tracking-widest">时间</span>
+                        <input id="voice-confirm-time" type="text" inputmode="numeric" value="${parsed.time}" class="manual-input-base manual-time-input" onblur="formatTimeInput(this)">
+                    </div>
+                    <div class="space-y-1">
+                        <span class="text-[10px] font-bold text-slate-400 tracking-widest">补剂</span>
+                        <div class="tab-group">
+                            <button type="button" id="voice-confirm-supplement-ad" onclick="setVoiceConfirmSimpleType('voice-confirm-type', 'AD', 'yellow')" class="tab-btn ${parsed.type === 'AD' ? 'active-yellow' : ''}">AD</button>
+                            <button type="button" id="voice-confirm-supplement-d3" onclick="setVoiceConfirmSimpleType('voice-confirm-type', 'D3', 'yellow')" class="tab-btn ${parsed.type === 'D3' ? 'active-yellow' : ''}">D3</button>
+                        </div>
+                        <input id="voice-confirm-type" type="hidden" value="${parsed.type}">
+                    </div>
+                `;
+            } else if (mode === 'sleep') {
+                form.innerHTML = `
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="space-y-1">
+                            <span class="text-[10px] font-bold text-slate-400 tracking-widest">入睡</span>
+                            <input id="voice-confirm-start" type="text" inputmode="numeric" value="${parsed.start}" class="manual-input-base manual-time-input" onblur="formatTimeInput(this)">
+                        </div>
+                        <div class="space-y-1">
+                            <span class="text-[10px] font-bold text-slate-400 tracking-widest">醒来</span>
+                            <input id="voice-confirm-end" type="text" inputmode="numeric" value="${parsed.end}" class="manual-input-base manual-time-input" onblur="formatTimeInput(this)">
+                        </div>
+                    </div>
+                    <label class="flex items-center justify-between bg-slate-50 rounded-2xl px-4 py-3">
+                        <span class="text-xs font-bold text-slate-600">按跨天睡眠记录</span>
+                        <input id="voice-confirm-cross" type="checkbox" class="w-5 h-5 rounded border-slate-300 text-sky-600" ${parsed.cross ? 'checked' : ''}>
+                    </label>
+                `;
+            } else {
+                form.innerHTML = '';
+            }
+            lucide.createIcons();
+        }
+
+        function setVoiceConfirmMilkType(type) {
+            const hidden = document.getElementById('voice-confirm-type');
+            if (hidden) hidden.value = type;
+            document.getElementById('voice-confirm-milk-breast')?.classList.toggle('active-yellow', type === '瓶喂母乳');
+            document.getElementById('voice-confirm-milk-formula')?.classList.toggle('active-yellow', type === '配方奶');
+        }
+
+        function setVoiceConfirmSimpleType(hiddenId, value, color) {
+            const hidden = document.getElementById(hiddenId);
+            if (hidden) hidden.value = value;
+            const mapping = {
+                green: {
+                    '尿尿': 'voice-confirm-poop-pee',
+                    '便便': 'voice-confirm-poop-poop',
+                    '尿尿+便便': 'voice-confirm-poop-both'
+                },
+                yellow: {
+                    'AD': 'voice-confirm-supplement-ad',
+                    'D3': 'voice-confirm-supplement-d3'
+                }
+            };
+            const ids = Object.values(mapping[color] || {});
+            ids.forEach(id => document.getElementById(id)?.classList.remove(`active-${color}`));
+            const activeId = mapping[color]?.[value];
+            if (activeId) document.getElementById(activeId)?.classList.add(`active-${color}`);
+        }
+
+        function collectVoiceConfirmValues() {
+            if (!pendingVoiceRecord) return null;
+            const { mode } = pendingVoiceRecord;
+            if (mode === 'milk') {
+                return {
+                    time: document.getElementById('voice-confirm-time')?.value || '',
+                    type: document.getElementById('voice-confirm-type')?.value || '',
+                    volume: parseInt(document.getElementById('voice-confirm-volume')?.value || '', 10)
+                };
+            }
+            if (mode === 'poop' || mode === 'supplement') {
+                return {
+                    time: document.getElementById('voice-confirm-time')?.value || '',
+                    type: document.getElementById('voice-confirm-type')?.value || ''
+                };
+            }
+            if (mode === 'sleep') {
+                return {
+                    start: document.getElementById('voice-confirm-start')?.value || '',
+                    end: document.getElementById('voice-confirm-end')?.value || '',
+                    cross: !!document.getElementById('voice-confirm-cross')?.checked
+                };
+            }
+            return null;
+        }
+
         function openVoiceConfirm(mode, parsed, transcript) {
             pendingVoiceRecord = { mode, parsed, transcript };
             const overlay = document.getElementById('voice-confirm-overlay');
             const panel = document.getElementById('voice-confirm-panel');
             const summary = document.getElementById('voice-confirm-summary');
-            const details = document.getElementById('voice-confirm-details');
-            if (!overlay || !panel || !summary || !details) return;
+            const form = document.getElementById('voice-confirm-form');
+            if (!overlay || !panel || !summary || !form) return;
 
             const labels = {
                 milk: '喝奶记录',
@@ -1543,38 +1676,9 @@
                 supplement: '补剂记录',
                 sleep: '睡眠记录'
             };
-            const detailMap = {
-                milk: [
-                    ['类别', labels[mode]],
-                    ['时间', parsed.time],
-                    ['类型', parsed.type],
-                    ['奶量', `${parsed.volume} ml`]
-                ],
-                poop: [
-                    ['类别', labels[mode]],
-                    ['时间', parsed.time],
-                    ['类型', parsed.type]
-                ],
-                supplement: [
-                    ['类别', labels[mode]],
-                    ['时间', parsed.time],
-                    ['补剂', parsed.type]
-                ],
-                sleep: [
-                    ['类别', labels[mode]],
-                    ['入睡', parsed.start],
-                    ['醒来', parsed.end],
-                    ['模式', parsed.cross ? '跨天睡眠' : '常规睡眠']
-                ]
-            };
 
-            summary.innerText = `识别到这条${labels[mode] || '记录'}，确认后会直接保存。`;
-            details.innerHTML = (detailMap[mode] || []).map(([label, value]) => `
-                <div class="voice-confirm-detail">
-                    <span class="text-[11px] font-bold text-slate-400 tracking-widest">${label}</span>
-                    <span class="text-sm font-black text-slate-800 text-right">${value}</span>
-                </div>
-            `).join('');
+            summary.innerText = `识别到这条${labels[mode] || '记录'}，可以先手动修改，再确认保存。`;
+            renderVoiceConfirmFields(mode, parsed);
 
             overlay.style.display = 'block';
             setTimeout(() => {
@@ -1604,6 +1708,49 @@
         function confirmVoiceRecord() {
             if (!pendingVoiceRecord) return;
             const { mode } = pendingVoiceRecord;
+            const values = collectVoiceConfirmValues();
+            if (!values) return;
+
+            if (mode === 'milk') {
+                if (!values.volume || !values.type || values.time.length < 5) {
+                    showToast('请补全奶量、时间和类型');
+                    return;
+                }
+                setMilkType(values.type);
+                document.getElementById('milk-volume').value = values.volume;
+                document.getElementById('milk-start-time').value = values.time;
+                document.getElementById('milk-end-time').value = values.time;
+            }
+
+            if (mode === 'poop') {
+                if (!values.type || values.time.length < 5) {
+                    showToast('请补全排泄时间和类型');
+                    return;
+                }
+                setPoopType(values.type);
+                document.getElementById('poop-time').value = values.time;
+            }
+
+            if (mode === 'supplement') {
+                if (!values.type || values.time.length < 5) {
+                    showToast('请补全补剂时间和类型');
+                    return;
+                }
+                setSupplementType(values.type);
+                document.getElementById('supplement-time').value = values.time;
+            }
+
+            if (mode === 'sleep') {
+                if (values.start.length < 5 || values.end.length < 5) {
+                    showToast('请补全睡眠起止时间');
+                    return;
+                }
+                document.getElementById('sleep-start-time').value = values.start;
+                document.getElementById('sleep-end-time').value = values.end;
+                document.getElementById('sleep-cross-day').checked = !!values.cross;
+                updateSleepAwakePanelState();
+            }
+
             closeVoiceConfirm();
             if (mode === 'milk') {
                 saveMilk();
