@@ -1,0 +1,21 @@
+{
+  "description": "宝宝日志微信小程序版",
+  "packOptions": {
+    "ignore": []
+  },
+  "setting": {
+    "es6": true,
+    "enhance": true,
+    "postcss": true,
+    "minified": true,
+    "coverView": true,
+    "showShadowRootInWxmlPanel": true,
+    "compileHotReLoad": true,
+    "uploadWithSourceMap": true,
+    "minifyWXML": true
+  },
+  "compileType": "miniprogram",
+  "libVersion": "3.6.5",
+  "appid": "wxe67392958f4aa08c",
+  "projectname": "baby-smile-miniprogram"
+}

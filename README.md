@@ -2,6 +2,32 @@
 
 一个轻量的宝宝成长记录网页，支持记录喝奶、排泄、睡眠、补剂，并查看按天趋势。
 
+## 微信小程序版
+
+项目中新增了一个微信小程序适配目录：
+
+- `miniprogram/`
+
+可直接用微信开发者工具打开 `miniprogram/project.config.json` 进行预览。
+
+当前小程序版已适配：
+
+- 喝奶 / 排泄 / 睡眠 / 补剂记录
+- 出生信息编辑
+- 分类折叠历史记录
+- 近 7 / 14 / 30 / 90 / 365 天趋势
+- 语音输入入口（测试号下默认禁用）
+- 自定义确认弹窗与语音后手动修改流程
+
+当前仍保留在网页版、未直接迁入小程序版的能力：
+
+- Supabase 邮箱 / Google 登录
+- GitHub 链接入口
+- CSV 导入导出
+- 浏览器原生 `SpeechRecognition`
+
+小程序语音识别预留为 `WechatSI` 插件方案。测试号无法使用该插件授权，所以当前小程序版会保留语音按钮但降级提示“暂不支持语音输入”；使用正式 AppID 并在微信公众平台授权插件后，可重新打开 `ENABLE_WECHAT_SI`。
+
 ## 在线访问
 
 - GitHub Pages: [https://xuzh237-code.github.io/baby-smile/](https://xuzh237-code.github.io/baby-smile/)

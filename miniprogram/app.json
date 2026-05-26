@@ -1,0 +1,18 @@
+{
+  "pages": [
+    "pages/index/index"
+  ],
+  "window": {
+    "navigationBarTitleText": "宝宝日志",
+    "navigationBarBackgroundColor": "#fcfcfc",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#fcfcfc"
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json",
+  "permission": {
+    "scope.record": {
+      "desc": "用于语音输入记录宝宝日常"
+    }
+  }
+}
