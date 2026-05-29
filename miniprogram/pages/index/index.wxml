@@ -8,8 +8,15 @@
             <text class="brand-title">宝宝日志</text>
           </view>
           <view class="header-actions">
-            <button class="icon-btn" bindtap="openBirthModal">生</button>
-            <button class="icon-btn" bindtap="openAnalysis">统</button>
+            <view class="icon-btn person-icon" bindtap="openBirthModal">
+              <view class="person-head"></view>
+              <view class="person-body"></view>
+            </view>
+            <view class="icon-btn chart-icon" bindtap="openAnalysis">
+              <view class="chart-stem short"></view>
+              <view class="chart-stem mid"></view>
+              <view class="chart-stem tall"></view>
+            </view>
           </view>
         </view>
 
@@ -29,13 +36,13 @@
         </view>
 
         <view class="date-nav">
-          <button class="nav-btn" data-offset="-1" bindtap="shiftDate">‹</button>
+          <view class="nav-btn" data-offset="-1" bindtap="shiftDate">‹</view>
           <view class="date-display">
             <text class="date-label">{{viewDateLabel}}</text>
             <text class="date-tag">{{viewDateTag}}</text>
           </view>
-          <button wx:if="{{viewDateTag !== '今天'}}" class="today-btn" bindtap="jumpToToday">今天</button>
-          <button class="nav-btn" data-offset="1" bindtap="shiftDate">›</button>
+          <view wx:if="{{viewDateTag !== '今天'}}" class="today-btn" bindtap="jumpToToday">今天</view>
+          <view class="nav-btn" data-offset="1" bindtap="shiftDate">›</view>
         </view>
       </view>
 
@@ -153,7 +160,7 @@
           <view class="tab-btn {{supplementType === 'AD' ? 'active-yellow' : ''}}" data-type="AD" bindtap="setSupplementType">AD</view>
           <view class="tab-btn {{supplementType === 'D3' ? 'active-yellow' : ''}}" data-type="D3" bindtap="setSupplementType">D3</view>
         </view>
-        <view class="action-row">
+        <view class="action-row supplement-action-row">
           <view class="field-block flex-1">
             <text class="field-label">时间</text>
             <input class="field-input" data-key="supplementTime" value="{{supplementTime}}" confirm-type="done" bindinput="onSupplementTimeInput" bindblur="onTimeBlur" bindconfirm="saveSupplement" />
@@ -196,13 +203,13 @@
   </scroll-view>
 
   <view class="voice-fab-wrap">
-    <button class="voice-fab {{!voiceSupported ? 'voice-fab-disabled' : ''}}" bindtap="openVoiceModal">
+    <view class="voice-fab {{!voiceSupported ? 'voice-fab-disabled' : ''}}" bindtap="openVoiceModal">
       <view class="voice-mic">
         <view class="voice-mic-head"></view>
         <view class="voice-mic-stem"></view>
         <view class="voice-mic-base"></view>
       </view>
-    </button>
+    </view>
   </view>
 
   <view wx:if="{{analysisVisible}}" class="overlay" bindtap="closeAnalysis"></view>

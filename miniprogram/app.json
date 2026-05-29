@@ -9,10 +9,5 @@
     "backgroundColor": "#fcfcfc"
   },
   "style": "v2",
-  "sitemapLocation": "sitemap.json",
-  "permission": {
-    "scope.record": {
-      "desc": "用于语音输入记录宝宝日常"
-    }
-  }
+  "sitemapLocation": "sitemap.json"
 }
