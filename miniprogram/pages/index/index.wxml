@@ -8,15 +8,8 @@
             <text class="brand-title">宝宝日志</text>
           </view>
           <view class="header-actions">
-            <view class="icon-btn person-icon" bindtap="openBirthModal">
-              <view class="person-head"></view>
-              <view class="person-body"></view>
-            </view>
-            <view class="icon-btn chart-icon" bindtap="openAnalysis">
-              <view class="chart-stem short"></view>
-              <view class="chart-stem mid"></view>
-              <view class="chart-stem tall"></view>
-            </view>
+            <view class="baby-name-pill" bindtap="openBirthModal">{{birthInfo.name}}</view>
+            <view class="stats-entry-pill" bindtap="openAnalysis">统计</view>
           </view>
         </view>
 
@@ -43,6 +36,11 @@
           </view>
           <view wx:if="{{viewDateTag !== '今天'}}" class="today-btn" bindtap="jumpToToday">今天</view>
           <view class="nav-btn" data-offset="1" bindtap="shiftDate">›</view>
+        </view>
+
+        <view class="sync-strip">
+          <text class="sync-status {{syncLoggedIn ? 'online' : ''}}">{{syncStatusText}}</text>
+          <view class="wechat-login-btn {{syncLoggedIn ? 'logged-in' : ''}} {{syncBusy ? 'busy' : ''}}" bindtap="loginWithWechat">{{syncBusy ? '同步中' : syncActionText}}</view>
         </view>
       </view>
 
@@ -80,11 +78,11 @@
         <view class="time-grid">
           <view class="field-block">
             <text class="field-label">开始</text>
-            <input class="field-input" data-key="milkStartTime" value="{{milkStartTime}}" confirm-type="next" bindinput="onMilkStartInput" bindblur="onTimeBlur" />
+            <input class="field-input" data-key="milkStartTime" value="{{milkStartTime}}" selection-start="0" selection-end="5" confirm-type="next" bindinput="onMilkStartInput" bindblur="onTimeBlur" />
           </view>
           <view class="field-block">
             <text class="field-label">结束</text>
-            <input class="field-input" data-key="milkEndTime" value="{{milkEndTime}}" confirm-type="done" bindinput="onMilkEndInput" bindblur="onTimeBlur" bindconfirm="saveMilk" />
+            <input class="field-input" data-key="milkEndTime" value="{{milkEndTime}}" selection-start="0" selection-end="5" confirm-type="done" bindinput="onMilkEndInput" bindblur="onTimeBlur" bindconfirm="saveMilk" />
           </view>
         </view>
       </view>
@@ -99,10 +97,10 @@
           <view class="tab-btn {{poopType === '便便' ? 'active-green' : ''}}" data-type="便便" bindtap="setPoopType">便便</view>
           <view class="tab-btn {{poopType === '尿尿+便便' ? 'active-green' : ''}}" data-type="尿尿+便便" bindtap="setPoopType">都要</view>
         </view>
-        <view class="action-row">
+        <view class="action-row poop-action-row">
           <view class="field-block flex-1">
             <text class="field-label">时间</text>
-            <input class="field-input" data-key="poopTime" value="{{poopTime}}" confirm-type="done" bindinput="onPoopTimeInput" bindblur="onTimeBlur" bindconfirm="savePoop" />
+            <input class="field-input" data-key="poopTime" value="{{poopTime}}" selection-start="0" selection-end="5" confirm-type="done" bindinput="onPoopTimeInput" bindblur="onTimeBlur" bindconfirm="savePoop" />
           </view>
           <button class="save-btn green" bindtap="savePoop">记录</button>
         </view>
@@ -122,11 +120,11 @@
         <view class="time-grid">
           <view class="field-block">
             <text class="field-label">入睡</text>
-            <input class="field-input" data-key="sleepStartTime" value="{{sleepStartTime}}" confirm-type="next" bindinput="onSleepStartInput" bindblur="onTimeBlur" />
+            <input class="field-input" data-key="sleepStartTime" value="{{sleepStartTime}}" selection-start="0" selection-end="5" confirm-type="next" bindinput="onSleepStartInput" bindblur="onTimeBlur" />
           </view>
           <view class="field-block">
             <text class="field-label">醒来</text>
-            <input class="field-input" data-key="sleepEndTime" value="{{sleepEndTime}}" confirm-type="done" bindinput="onSleepEndInput" bindblur="onTimeBlur" bindconfirm="saveSleep" />
+            <input class="field-input" data-key="sleepEndTime" value="{{sleepEndTime}}" selection-start="0" selection-end="5" confirm-type="done" bindinput="onSleepEndInput" bindblur="onTimeBlur" bindconfirm="saveSleep" />
           </view>
         </view>
         <view wx:if="{{showSleepAwakePanel}}" class="awake-panel">
@@ -137,11 +135,11 @@
           <view class="time-grid">
             <view class="field-block">
               <text class="field-label">开始</text>
-              <input class="field-input" data-key="sleepAwakeStartTime" value="{{sleepAwakeStartTime}}" confirm-type="next" bindinput="onSleepAwakeStartInput" bindblur="onTimeBlur" />
+              <input class="field-input" data-key="sleepAwakeStartTime" value="{{sleepAwakeStartTime}}" placeholder="例 05:00" selection-start="0" selection-end="5" confirm-type="next" bindinput="onSleepAwakeStartInput" bindblur="onTimeBlur" />
             </view>
             <view class="field-block">
               <text class="field-label">结束</text>
-              <input class="field-input" data-key="sleepAwakeEndTime" value="{{sleepAwakeEndTime}}" confirm-type="done" bindinput="onSleepAwakeEndInput" bindblur="onTimeBlur" bindconfirm="saveSleep" />
+              <input class="field-input" data-key="sleepAwakeEndTime" value="{{sleepAwakeEndTime}}" placeholder="例 06:00" selection-start="0" selection-end="5" confirm-type="done" bindinput="onSleepAwakeEndInput" bindblur="onTimeBlur" bindconfirm="saveSleep" />
             </view>
           </view>
         </view>
@@ -163,7 +161,7 @@
         <view class="action-row supplement-action-row">
           <view class="field-block flex-1">
             <text class="field-label">时间</text>
-            <input class="field-input" data-key="supplementTime" value="{{supplementTime}}" confirm-type="done" bindinput="onSupplementTimeInput" bindblur="onTimeBlur" bindconfirm="saveSupplement" />
+            <input class="field-input" data-key="supplementTime" value="{{supplementTime}}" selection-start="0" selection-end="5" confirm-type="done" bindinput="onSupplementTimeInput" bindblur="onTimeBlur" bindconfirm="saveSupplement" />
           </view>
           <button class="save-btn indigo" bindtap="saveSupplement">记录</button>
         </view>
@@ -202,21 +200,15 @@
     </view>
   </scroll-view>
 
-  <view class="voice-fab-wrap">
-    <view class="voice-fab {{!voiceSupported ? 'voice-fab-disabled' : ''}}" bindtap="openVoiceModal">
-      <view class="voice-mic">
-        <view class="voice-mic-head"></view>
-        <view class="voice-mic-stem"></view>
-        <view class="voice-mic-base"></view>
-      </view>
-    </view>
-  </view>
-
   <view wx:if="{{analysisVisible}}" class="overlay" bindtap="closeAnalysis"></view>
   <view wx:if="{{analysisVisible}}" class="sheet sheet-analysis">
     <view class="sheet-head">
       <text class="sheet-title">{{analysisTitle}}</text>
       <button class="sheet-close" bindtap="closeAnalysis">✕</button>
+    </view>
+    <view class="data-tools-row">
+      <button class="data-tool-btn export" bindtap="exportData">导出CSV</button>
+      <button class="data-tool-btn import" bindtap="importData">导入CSV</button>
     </view>
     <view class="tab-group compact">
       <view class="tab-btn {{analysisRange === 'day' ? 'active-yellow' : ''}}" data-range="day" bindtap="setAnalysisRange">7天</view>
@@ -258,9 +250,13 @@
 
   <view wx:if="{{birthVisible}}" class="overlay" bindtap="closeBirthModal"></view>
   <view wx:if="{{birthVisible}}" class="sheet">
-    <view class="sheet-head">
+    <view class="sheet-head birth-sheet-head">
       <text class="sheet-title">出生信息</text>
       <button class="sheet-close" bindtap="closeBirthModal">✕</button>
+    </view>
+    <view class="field-block">
+      <text class="field-label">宝宝名称</text>
+      <input class="field-input left baby-name-input" maxlength="12" placeholder="请输入宝宝名称" value="{{birthDraft.name}}" bindinput="onBirthNameInput" />
     </view>
     <view class="field-block">
       <text class="field-label">出生日期</text>
@@ -282,9 +278,9 @@
 
   <view wx:if="{{editVisible}}" class="overlay" bindtap="closeEditModal"></view>
   <view wx:if="{{editVisible}}" class="sheet">
-    <view class="sheet-head">
+    <view class="sheet-head edit-sheet-head">
       <text class="sheet-title">修改记录</text>
-      <button class="sheet-close danger" bindtap="deleteEditRecord">删</button>
+      <view class="delete-btn" bindtap="deleteEditRecord">删除</view>
     </view>
     <block wx:if="{{editForm.cat === '喝奶'}}">
       <view class="field-block">
@@ -294,11 +290,11 @@
       <view class="time-grid">
         <view class="field-block">
           <text class="field-label">开始</text>
-          <input class="field-input" data-key="start" value="{{editForm.start}}" bindinput="onEditInput" bindblur="onEditTimeBlur" />
+          <input class="field-input" data-key="start" value="{{editForm.start}}" selection-start="0" selection-end="5" bindinput="onEditInput" bindblur="onEditTimeBlur" />
         </view>
         <view class="field-block">
           <text class="field-label">结束</text>
-          <input class="field-input" data-key="end" value="{{editForm.end}}" bindinput="onEditInput" bindblur="onEditTimeBlur" />
+          <input class="field-input" data-key="end" value="{{editForm.end}}" selection-start="0" selection-end="5" bindinput="onEditInput" bindblur="onEditTimeBlur" />
         </view>
       </view>
       <view class="tab-group">
@@ -309,7 +305,7 @@
     <block wx:elif="{{editForm.cat === '排泄'}}">
       <view class="field-block">
         <text class="field-label">时间</text>
-        <input class="field-input" data-key="time" value="{{editForm.time}}" bindinput="onEditInput" bindblur="onEditTimeBlur" />
+        <input class="field-input" data-key="time" value="{{editForm.time}}" selection-start="0" selection-end="5" bindinput="onEditInput" bindblur="onEditTimeBlur" />
       </view>
       <view class="tab-group">
         <view class="tab-btn {{editForm.type === '尿尿' ? 'active-green' : ''}}" data-type="尿尿" bindtap="setEditType">尿尿</view>
@@ -320,7 +316,7 @@
     <block wx:elif="{{editForm.cat === '补剂'}}">
       <view class="field-block">
         <text class="field-label">时间</text>
-        <input class="field-input" data-key="time" value="{{editForm.time}}" bindinput="onEditInput" bindblur="onEditTimeBlur" />
+        <input class="field-input" data-key="time" value="{{editForm.time}}" selection-start="0" selection-end="5" bindinput="onEditInput" bindblur="onEditTimeBlur" />
       </view>
       <view class="tab-group">
         <view class="tab-btn {{editForm.type === 'AD' ? 'active-yellow' : ''}}" data-type="AD" bindtap="setEditType">AD</view>
@@ -331,11 +327,11 @@
       <view class="time-grid">
         <view class="field-block">
           <text class="field-label">入睡</text>
-          <input class="field-input" data-key="start" value="{{editForm.start}}" bindinput="onEditInput" bindblur="onEditTimeBlur" />
+          <input class="field-input" data-key="start" value="{{editForm.start}}" selection-start="0" selection-end="5" bindinput="onEditInput" bindblur="onEditTimeBlur" />
         </view>
         <view class="field-block">
           <text class="field-label">醒来</text>
-          <input class="field-input" data-key="end" value="{{editForm.end}}" bindinput="onEditInput" bindblur="onEditTimeBlur" />
+          <input class="field-input" data-key="end" value="{{editForm.end}}" selection-start="0" selection-end="5" bindinput="onEditInput" bindblur="onEditTimeBlur" />
         </view>
       </view>
       <label class="switch-card">
@@ -345,11 +341,11 @@
       <view class="time-grid">
         <view class="field-block">
           <text class="field-label">清醒开始</text>
-          <input class="field-input" data-key="awakeStart" value="{{editForm.awakeStart}}" bindinput="onEditInput" bindblur="onEditTimeBlur" />
+          <input class="field-input" data-key="awakeStart" value="{{editForm.awakeStart}}" placeholder="例 05:00" selection-start="0" selection-end="5" bindinput="onEditInput" bindblur="onEditTimeBlur" />
         </view>
         <view class="field-block">
           <text class="field-label">清醒结束</text>
-          <input class="field-input" data-key="awakeEnd" value="{{editForm.awakeEnd}}" bindinput="onEditInput" bindblur="onEditTimeBlur" />
+          <input class="field-input" data-key="awakeEnd" value="{{editForm.awakeEnd}}" placeholder="例 06:00" selection-start="0" selection-end="5" bindinput="onEditInput" bindblur="onEditTimeBlur" />
         </view>
       </view>
     </block>

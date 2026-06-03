@@ -16,17 +16,17 @@
 - 出生信息编辑
 - 分类折叠历史记录
 - 近 7 / 14 / 30 / 90 / 365 天趋势
-- 语音输入入口（测试号下默认禁用）
-- 自定义确认弹窗与语音后手动修改流程
+- CSV 导入导出
+- 本地优先记录
+- 微信登录后云端同步
 
 当前仍保留在网页版、未直接迁入小程序版的能力：
 
 - Supabase 邮箱 / Google 登录
 - GitHub 链接入口
-- CSV 导入导出
 - 浏览器原生 `SpeechRecognition`
 
-小程序语音识别预留为 `WechatSI` 插件方案。测试号无法使用该插件授权，所以当前小程序版会保留语音按钮但降级提示“暂不支持语音输入”；使用正式 AppID 并在微信公众平台授权插件后，可重新打开 `ENABLE_WECHAT_SI`。
+小程序语音识别预留为 `WechatSI` 插件方案。测试号无法使用该插件授权，所以当前小程序版默认不展示语音入口；使用正式 AppID 并在微信公众平台授权插件后，可重新打开 `ENABLE_WECHAT_SI`。
 
 ## 在线访问
 
@@ -61,7 +61,7 @@
 
 ## 云端同步配置
 
-当前项目已经接入 Supabase：
+Web 版已经接入 Supabase：
 
 - Supabase Project URL: `https://osclgqcupdgwhndoytgu.supabase.co`
 - GitHub Pages: [https://xuzh237-code.github.io/baby-smile/](https://xuzh237-code.github.io/baby-smile/)
@@ -84,3 +84,13 @@
 ## 数据表
 
 云端记录表为 `public.baby_records`，已开启 RLS，仅允许登录用户访问和修改自己的记录。
+
+## 小程序微信同步配置
+
+小程序版默认本地可用。需要微信登录同步时：
+
+1. 在微信开发者工具中开启「云开发」，创建云环境。
+2. 在 `miniprogram/utils/cloudConfig.js` 中填入 `CLOUD_ENV_ID`。
+3. 在云开发数据库中新建集合 `baby_smile_sync`。
+4. 将集合权限设置为“仅创建者可读写”。
+5. 发布后用户点击「微信登录」，本地数据会与云端合并；换手机后使用同一个微信登录即可恢复数据。

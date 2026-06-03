@@ -5,11 +5,13 @@ const STORAGE_KEYS = {
 };
 
 const DEFAULT_BIRTH = {
+  name: '宝宝',
   date: '2025-10-28',
   time: '00:30'
 };
 
 const CATEGORY_ORDER = ['喝奶', '排泄', '睡眠', '补剂'];
+const CSV_COLUMNS = ['id', 'dateKey', 'date', 'cat', 'type', 'val', 'raw', 'icon', 'color', 'time', 'meta', 'createdAt', 'updatedAt'];
 
 function padNumber(value) {
   return String(value).padStart(2, '0');
@@ -136,6 +138,76 @@ function sortRecordsByRecent(recordList = []) {
   });
 }
 
+function escapeCsvValue(value) {
+  const text = value === undefined || value === null ? '' : String(value);
+  if (/[",\n\r]/.test(text)) return `"${text.replace(/"/g, '""')}"`;
+  return text;
+}
+
+function parseCsvLine(line = '') {
+  const cells = [];
+  let cell = '';
+  let quoted = false;
+  for (let i = 0; i < line.length; i += 1) {
+    const char = line[i];
+    const next = line[i + 1];
+    if (char === '"' && quoted && next === '"') {
+      cell += '"';
+      i += 1;
+    } else if (char === '"') {
+      quoted = !quoted;
+    } else if (char === ',' && !quoted) {
+      cells.push(cell);
+      cell = '';
+    } else {
+      cell += char;
+    }
+  }
+  cells.push(cell);
+  return cells;
+}
+
+function recordsToCsv(recordList = []) {
+  const rows = [CSV_COLUMNS.join(',')];
+  sortRecordsByRecent(recordList).forEach(record => {
+    const normalized = normalizeRecord(record);
+    const row = CSV_COLUMNS.map(column => {
+      const value = column === 'meta' ? JSON.stringify(normalized.meta || {}) : normalized[column];
+      return escapeCsvValue(value);
+    });
+    rows.push(row.join(','));
+  });
+  return rows.join('\n');
+}
+
+function csvToRecords(csv = '') {
+  const text = String(csv || '').trim();
+  if (!text) return [];
+  if (text.startsWith('[')) return JSON.parse(text).map(normalizeRecord);
+
+  const lines = text.split(/\r?\n/).filter(line => line.trim());
+  if (lines.length < 2) return [];
+  const headers = parseCsvLine(lines[0]).map(header => header.trim());
+  return lines.slice(1).map(line => {
+    const values = parseCsvLine(line);
+    const row = {};
+    headers.forEach((header, index) => {
+      row[header] = values[index] || '';
+    });
+    let meta = {};
+    try {
+      meta = row.meta ? JSON.parse(row.meta) : {};
+    } catch (error) {
+      meta = {};
+    }
+    return normalizeRecord({
+      ...row,
+      raw: Number(row.raw) || 0,
+      meta
+    });
+  });
+}
+
 function createRecord({ dateKey, cat, type, val, raw, icon, color, time, meta }) {
   const nowIso = new Date().toISOString();
   return normalizeRecord({
@@ -171,7 +243,7 @@ function saveRecords(records) {
 function loadBirthInfo() {
   try {
     const stored = wx.getStorageSync(STORAGE_KEYS.birth);
-    if (stored?.date && stored?.time) return stored;
+    if (stored?.date && stored?.time) return { ...DEFAULT_BIRTH, ...stored };
   } catch (error) {}
   return { ...DEFAULT_BIRTH };
 }
@@ -494,6 +566,7 @@ module.exports = {
   STORAGE_KEYS,
   DEFAULT_BIRTH,
   CATEGORY_ORDER,
+  CSV_COLUMNS,
   padNumber,
   getDateKey,
   parseDateKey,
@@ -505,6 +578,8 @@ module.exports = {
   buildSleepRecordData,
   normalizeRecord,
   sortRecordsByRecent,
+  recordsToCsv,
+  csvToRecords,
   createRecord,
   loadRecords,
   saveRecords,

@@ -14,7 +14,7 @@ button::after {
 .page-inner {
   max-width: 760rpx;
   margin: 0 auto;
-  padding: 22rpx 0 300rpx;
+  padding: 22rpx 0 180rpx;
 }
 
 .section-card,
@@ -111,6 +111,14 @@ button::after {
   margin-right: 34rpx;
 }
 
+.sync-strip {
+  margin: 18rpx 34rpx 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+
 .brand {
   flex-direction: row;
   align-items: center;
@@ -127,11 +135,11 @@ button::after {
 }
 
 .brand-icon,
-.icon-btn,
+.baby-name-pill,
+.stats-entry-pill,
 .nav-btn,
 .today-btn,
-.sheet-close,
-.voice-fab {
+.sheet-close {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -154,7 +162,6 @@ button::after {
   white-space: nowrap;
 }
 
-.icon-btn,
 .nav-btn,
 .sheet-close {
   width: 56rpx;
@@ -171,58 +178,108 @@ button::after {
   margin: 0;
 }
 
-.icon-btn {
-  background: transparent;
-  border: 0;
-  color: #94a3b8;
-  font-weight: 900;
-  opacity: 0.92;
-}
-
-.person-icon {
-  position: relative;
-}
-
-.person-head,
-.person-body {
+.sheet .sheet-close {
   position: absolute;
-  border: 5rpx solid #94a3b8;
-}
-
-.person-head {
-  top: 10rpx;
-  width: 18rpx;
-  height: 18rpx;
+  top: 24rpx;
+  right: 24rpx;
+  width: 52rpx;
+  height: 52rpx;
   border-radius: 999rpx;
+  background: #f8fafc;
+  color: #94a3b8;
+  font-size: 26rpx;
+  font-weight: 900;
+  box-shadow: 0 8rpx 20rpx rgba(15, 23, 42, 0.04);
 }
 
-.person-body {
-  bottom: 9rpx;
-  width: 30rpx;
-  height: 18rpx;
-  border-top-left-radius: 999rpx;
-  border-top-right-radius: 999rpx;
-  border-bottom: 0;
+.baby-name-pill {
+  max-width: 168rpx;
+  min-height: 56rpx;
+  padding: 0 22rpx;
+  border-radius: 18rpx;
+  background: #fff7ed;
+  border: 2rpx solid #fed7aa;
+  color: #c2410c;
+  font-size: 24rpx;
+  font-weight: 900;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.chart-icon {
-  gap: 7rpx;
-  align-items: flex-end;
+.stats-entry-pill {
+  min-height: 56rpx;
+  padding: 0 20rpx;
+  border-radius: 18rpx;
+  background: #eff6ff;
+  border: 2rpx solid #bfdbfe;
+  color: #0284c7;
+  font-size: 24rpx;
+  font-weight: 900;
+  white-space: nowrap;
 }
 
-.chart-stem {
-  width: 5rpx;
-  border-radius: 999rpx;
-  background: #94a3b8;
+.sync-status {
+  flex: 1;
+  color: #94a3b8;
+  font-size: 20rpx;
+  font-weight: 800;
 }
 
-.chart-stem.short { height: 20rpx; }
-.chart-stem.mid { height: 32rpx; }
-.chart-stem.tall { height: 42rpx; }
+.sync-status.online {
+  color: #059669;
+}
 
-.sheet-close.danger {
+.wechat-login-btn {
+  min-width: 132rpx;
+  height: 52rpx;
+  border-radius: 18rpx;
+  background: #ecfdf5;
+  border: 2rpx solid #a7f3d0;
+  color: #047857;
+  font-size: 22rpx;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wechat-login-btn.logged-in {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+  color: #64748b;
+}
+
+.wechat-login-btn.busy {
+  opacity: 0.7;
+}
+
+.baby-name-input {
+  padding-right: 24rpx;
+}
+
+.delete-btn {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 96rpx;
+  height: 56rpx;
+  border-radius: 20rpx;
   background: #fee2e2;
   color: #ef4444;
+  font-size: 24rpx;
+  font-weight: 900;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.edit-sheet-head {
+  position: relative;
+  width: 100%;
+  min-height: 56rpx;
+  padding-right: 112rpx;
 }
 
 .age-strip {
@@ -411,6 +468,43 @@ button::after {
   margin-top: 0;
 }
 
+.data-tools-row {
+  display: flex;
+  gap: 16rpx;
+  margin: 18rpx 0 20rpx;
+}
+
+.data-tool-btn {
+  flex: 1;
+  min-height: 72rpx;
+  border-radius: 20rpx;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 24rpx;
+  font-weight: 900;
+  line-height: 1;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.data-tool-btn.export {
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+.data-tool-btn.import {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.birth-sheet-head {
+  justify-content: flex-start;
+  padding-right: 72rpx;
+}
+
 .tab-btn {
   flex: 1;
   min-height: 70rpx;
@@ -446,6 +540,7 @@ button::after {
   margin-top: 32rpx;
 }
 
+.poop-action-row,
 .supplement-action-row {
   align-items: flex-end;
 }
@@ -678,75 +773,6 @@ button::after {
   padding: 20rpx 0 0;
 }
 
-.voice-fab-wrap {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: calc(-30rpx + env(safe-area-inset-bottom));
-  display: flex;
-  justify-content: center;
-  transform: translateX(-112rpx);
-  pointer-events: none;
-}
-
-.voice-fab {
-  width: 82rpx;
-  height: 82rpx;
-  min-width: 0;
-  min-height: 0;
-  border-radius: 41rpx;
-  background: linear-gradient(145deg, #ffffff 0%, #f8fafc 54%, #eef2ff 100%);
-  box-shadow:
-    0 12rpx 28rpx rgba(15, 23, 42, 0.14),
-    0 0 0 8rpx rgba(14, 165, 233, 0.07),
-    0 0 0 14rpx rgba(244, 114, 182, 0.04);
-  border: 2rpx solid rgba(226, 232, 240, 0.9);
-  padding: 0;
-  margin: 0;
-  line-height: 1;
-  pointer-events: auto;
-}
-
-.voice-fab-disabled {
-  opacity: 0.68;
-}
-
-.voice-mic {
-  width: 36rpx;
-  height: 46rpx;
-  position: relative;
-}
-
-.voice-mic-head {
-  position: absolute;
-  left: 10rpx;
-  top: 0;
-  width: 18rpx;
-  height: 28rpx;
-  border-radius: 999rpx;
-  background: #0f172a;
-}
-
-.voice-mic-stem {
-  position: absolute;
-  left: 16rpx;
-  top: 28rpx;
-  width: 6rpx;
-  height: 14rpx;
-  border-radius: 999rpx;
-  background: #0f172a;
-}
-
-.voice-mic-base {
-  position: absolute;
-  left: 7rpx;
-  bottom: 0;
-  width: 24rpx;
-  height: 6rpx;
-  border-radius: 999rpx;
-  background: #0f172a;
-}
-
 .overlay {
   position: fixed;
   inset: 0;
@@ -762,6 +788,10 @@ button::after {
   border-radius: 32rpx;
   padding: 28rpx;
   z-index: 20;
+}
+
+.sheet {
+  padding-top: 38rpx;
 }
 
 .sheet-analysis {

@@ -1,4 +1,5 @@
 const core = require('../../utils/core');
+const cloudSync = require('../../utils/cloudSync');
 
 let recordManager = null;
 const ENABLE_WECHAT_SI = false;
@@ -44,6 +45,10 @@ Page({
       poop: 0,
       sleep: '0.0'
     },
+    syncLoggedIn: false,
+    syncBusy: false,
+    syncActionText: '微信登录',
+    syncStatusText: '本地可用',
     groupedRecords: [],
     milkType: '瓶喂母乳',
     milkVolume: '',
@@ -102,6 +107,7 @@ Page({
     this.voiceAnimationTimer = null;
     this.voiceCancelled = false;
     this.pendingVoiceRecord = null;
+    this.syncDocId = '';
     this.initVoiceManager();
     this.resetDefaultTimes();
     this.refreshPageState();
@@ -207,6 +213,15 @@ Page({
       analysisMilkAverage: analysis.milkAverage,
       analysisSleepAverage: analysis.sleepAverage.toFixed(1),
       analysisSelected: selected
+    });
+  },
+
+  refreshSyncState(text) {
+    const loggedIn = !!this.syncDocId;
+    this.setData({
+      syncLoggedIn: loggedIn,
+      syncActionText: loggedIn ? '已登录' : '微信登录',
+      syncStatusText: text || (loggedIn ? '云端同步中' : '本地可用')
     });
   },
 
@@ -328,6 +343,46 @@ Page({
   persistRecords() {
     core.saveRecords(this.records);
     this.refreshPageState();
+    this.pushCloudSync();
+  },
+
+  async pushCloudSync() {
+    if (!this.syncDocId || !cloudSync.isConfigured()) return;
+    try {
+      await cloudSync.saveSyncDoc(this.syncDocId, this.records, this.birthInfo);
+      this.refreshSyncState('已同步');
+    } catch (error) {
+      this.refreshSyncState('同步失败');
+    }
+  },
+
+  async loginWithWechat() {
+    if (this.data.syncBusy) return;
+    if (!cloudSync.isConfigured()) {
+      this.showToast('请先配置云开发环境');
+      return;
+    }
+    this.setData({ syncBusy: true, syncStatusText: '同步中…' });
+    try {
+      const result = await cloudSync.syncLocalWithCloud(this.records, this.birthInfo);
+      if (!result.configured) {
+        this.showToast('请先配置云开发环境');
+        return;
+      }
+      this.syncDocId = result.docId || '';
+      this.records = core.sortRecordsByRecent(result.records || []);
+      this.birthInfo = { ...core.DEFAULT_BIRTH, ...(result.birthInfo || {}) };
+      core.saveRecords(this.records);
+      core.saveBirthInfo(this.birthInfo);
+      this.refreshPageState();
+      this.refreshSyncState('已同步');
+      this.showToast('微信登录成功，已同步');
+    } catch (error) {
+      this.refreshSyncState('同步失败');
+      this.showToast('微信登录或同步失败');
+    } finally {
+      this.setData({ syncBusy: false });
+    }
   },
 
   addRecord(record) {
@@ -441,6 +496,45 @@ Page({
     this.setData({ analysisVisible: false });
   },
 
+  exportData() {
+    const csv = core.recordsToCsv(this.records);
+    wx.setClipboardData({
+      data: csv,
+      success: () => this.showToast('CSV 已复制'),
+      fail: () => this.showToast('导出失败')
+    });
+  },
+
+  importData() {
+    wx.showModal({
+      title: '导入CSV',
+      content: '请先复制导出的 CSV 内容，确认后会从剪贴板导入并合并数据。',
+      confirmText: '导入',
+      success: (result) => {
+        if (!result.confirm) return;
+        wx.getClipboardData({
+          success: ({ data }) => {
+            try {
+              const incomingRecords = core.csvToRecords(data);
+              if (!incomingRecords.length) {
+                this.showToast('剪贴板没有可导入数据');
+                return;
+              }
+              const merged = new Map(this.records.map(record => [record.id, record]));
+              incomingRecords.forEach(record => merged.set(record.id, record));
+              this.records = core.sortRecordsByRecent([...merged.values()]);
+              this.persistRecords();
+              this.showToast(`已导入 ${incomingRecords.length} 条`);
+            } catch (error) {
+              this.showToast('导入失败，请检查CSV');
+            }
+          },
+          fail: () => this.showToast('读取剪贴板失败')
+        });
+      }
+    });
+  },
+
   setAnalysisRange(event) {
     this.setData({
       analysisRange: event.currentTarget.dataset.range,
@@ -469,6 +563,10 @@ Page({
     this.setData({ birthVisible: false });
   },
 
+  onBirthNameInput(event) {
+    this.setData({ 'birthDraft.name': event.detail.value });
+  },
+
   onBirthDateChange(event) {
     this.setData({ 'birthDraft.date': event.detail.value });
   },
@@ -479,13 +577,15 @@ Page({
 
   saveBirthInfo() {
     const draft = this.data.birthDraft;
+    const name = String(draft.name || '').trim() || '宝宝';
     const birthDate = new Date(`${draft.date}T${draft.time}:00`);
     if (Number.isNaN(birthDate.getTime())) return this.showToast('出生时间格式不正确');
     if (birthDate > new Date()) return this.showToast('出生时间不能晚于现在');
-    this.birthInfo = clone(draft);
+    this.birthInfo = { ...clone(draft), name };
     core.saveBirthInfo(this.birthInfo);
     this.setData({ birthVisible: false });
     this.refreshPageState();
+    this.pushCloudSync();
     this.showToast('出生信息已更新');
   },
 
