@@ -137,6 +137,7 @@ button::after {
 .brand-icon,
 .baby-name-pill,
 .stats-entry-pill,
+.wechat-login-pill,
 .nav-btn,
 .today-btn,
 .sheet-close {
@@ -217,6 +218,28 @@ button::after {
   font-size: 24rpx;
   font-weight: 900;
   white-space: nowrap;
+}
+
+.wechat-login-pill {
+  min-height: 56rpx;
+  padding: 0 18rpx;
+  border-radius: 18rpx;
+  background: #ecfdf5;
+  border: 2rpx solid #a7f3d0;
+  color: #047857;
+  font-size: 24rpx;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.wechat-login-pill.logged-in {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+  color: #64748b;
+}
+
+.wechat-login-pill.busy {
+  opacity: 0.7;
 }
 
 .sync-status {

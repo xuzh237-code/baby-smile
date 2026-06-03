@@ -10,6 +10,7 @@
           <view class="header-actions">
             <view class="baby-name-pill" bindtap="openBirthModal">{{birthInfo.name}}</view>
             <view class="stats-entry-pill" bindtap="openAnalysis">统计</view>
+            <view class="wechat-login-pill {{syncLoggedIn ? 'logged-in' : ''}} {{syncBusy ? 'busy' : ''}}" bindtap="loginWithWechat">{{syncBusy ? '同步中' : syncActionText}}</view>
           </view>
         </view>
 
@@ -40,7 +41,6 @@
 
         <view class="sync-strip">
           <text class="sync-status {{syncLoggedIn ? 'online' : ''}}">{{syncStatusText}}</text>
-          <view class="wechat-login-btn {{syncLoggedIn ? 'logged-in' : ''}} {{syncBusy ? 'busy' : ''}}" bindtap="loginWithWechat">{{syncBusy ? '同步中' : syncActionText}}</view>
         </view>
       </view>
 
