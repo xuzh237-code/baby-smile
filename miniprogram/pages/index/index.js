@@ -356,10 +356,32 @@ Page({
     }
   },
 
+  requestWechatProfile() {
+    return new Promise((resolve, reject) => {
+      if (typeof wx.getUserProfile !== 'function') {
+        reject(new Error('profile api unavailable'));
+        return;
+      }
+      wx.getUserProfile({
+        desc: '用于登录后同步宝宝日志数据',
+        lang: 'zh_CN',
+        success: (res) => resolve(res.userInfo || {}),
+        fail: reject
+      });
+    });
+  },
+
   async loginWithWechat() {
     if (this.data.syncBusy) return;
     if (!cloudSync.isConfigured()) {
       this.showToast('请先配置云开发环境');
+      return;
+    }
+    try {
+      await this.requestWechatProfile();
+    } catch (error) {
+      this.refreshSyncState('本地可用');
+      this.showToast('已取消微信登录');
       return;
     }
     this.setData({ syncBusy: true, syncStatusText: '同步中…' });
