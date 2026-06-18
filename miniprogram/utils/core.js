@@ -248,6 +248,15 @@ function loadBirthInfo() {
   return { ...DEFAULT_BIRTH };
 }
 
+function hasSavedBirthInfo() {
+  try {
+    const stored = wx.getStorageSync(STORAGE_KEYS.birth);
+    return !!(stored && stored.date && stored.time);
+  } catch (error) {
+    return false;
+  }
+}
+
 function saveBirthInfo(info) {
   wx.setStorageSync(STORAGE_KEYS.birth, info);
 }
@@ -584,6 +593,7 @@ module.exports = {
   loadRecords,
   saveRecords,
   loadBirthInfo,
+  hasSavedBirthInfo,
   saveBirthInfo,
   loadCollapsedState,
   saveCollapsedState,

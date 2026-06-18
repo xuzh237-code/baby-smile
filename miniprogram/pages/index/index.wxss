@@ -194,18 +194,44 @@ button::after {
 }
 
 .baby-name-pill {
-  max-width: 168rpx;
+  max-width: 214rpx;
   min-height: 56rpx;
-  padding: 0 22rpx;
+  padding: 0 14rpx 0 18rpx;
   border-radius: 18rpx;
   background: #fff7ed;
   border: 2rpx solid #fed7aa;
   color: #c2410c;
   font-size: 24rpx;
   font-weight: 900;
+  gap: 10rpx;
+}
+
+.baby-name-main {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.baby-name-pill.empty {
+  background: #fffbeb;
+  border-color: #fcd34d;
+  color: #b45309;
+  box-shadow: 0 10rpx 24rpx rgba(245, 158, 11, 0.12);
+}
+
+.baby-name-edit {
+  min-width: 72rpx;
+  height: 36rpx;
+  padding: 0 10rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.75);
+  color: #d97706;
+  font-size: 24rpx;
+  font-weight: 900;
+  line-height: 36rpx;
+  text-align: center;
+  flex-shrink: 0;
 }
 
 .stats-entry-pill {
@@ -313,6 +339,16 @@ button::after {
   border: 2rpx solid #fde68a;
   border-radius: 28rpx;
   gap: 16rpx;
+}
+
+.age-strip.empty {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+.age-strip.empty .age-label,
+.age-strip.empty .age-value {
+  color: #94a3b8;
 }
 
 .age-item {

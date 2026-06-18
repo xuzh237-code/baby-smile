@@ -8,16 +8,19 @@
             <text class="brand-title">宝宝日志</text>
           </view>
           <view class="header-actions">
-            <view class="baby-name-pill" bindtap="openBirthModal">{{birthInfo.name}}</view>
+            <view class="baby-name-pill {{hasBirthInfo ? '' : 'empty'}}" bindtap="openBirthModal">
+              <text class="baby-name-main">{{babyNameLabel}}</text>
+              <text class="baby-name-edit">{{hasBirthInfo ? '改' : '填资料'}}</text>
+            </view>
             <view class="stats-entry-pill" bindtap="openAnalysis">统计</view>
             <view class="wechat-login-pill {{syncLoggedIn ? 'logged-in' : ''}} {{syncBusy ? 'busy' : ''}}" bindtap="loginWithWechat">{{syncBusy ? '同步中' : syncActionText}}</view>
           </view>
         </view>
 
-        <view class="age-strip">
+        <view class="age-strip {{hasBirthInfo ? '' : 'empty'}}">
           <view class="age-item">
             <text class="age-label">出生天数</text>
-            <text class="age-value">{{ageSummary.totalDays}} 天</text>
+            <text class="age-value">{{ageSummary.totalDaysLabel}}</text>
           </view>
           <view class="age-item">
             <text class="age-label">月龄</text>
@@ -256,7 +259,7 @@
     </view>
     <view class="field-block">
       <text class="field-label">宝宝名称</text>
-      <input class="field-input left baby-name-input" maxlength="12" placeholder="请输入宝宝名称" value="{{birthDraft.name}}" bindinput="onBirthNameInput" />
+      <input class="field-input baby-name-input" maxlength="12" placeholder="请输入宝宝名称" value="{{birthDraft.name}}" bindinput="onBirthNameInput" />
     </view>
     <view class="field-block">
       <text class="field-label">出生日期</text>

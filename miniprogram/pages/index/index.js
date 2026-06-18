@@ -3,6 +3,8 @@ const cloudSync = require('../../utils/cloudSync');
 
 let recordManager = null;
 const ENABLE_WECHAT_SI = false;
+const SHARE_TITLE = '宝宝吃睡拉记录';
+const SHARE_PATH = '/pages/index/index';
 
 function getNowTime() {
   const now = new Date();
@@ -27,6 +29,28 @@ function clone(obj) {
   return JSON.parse(JSON.stringify(obj));
 }
 
+const EMPTY_AGE_SUMMARY = {
+  totalDays: 0,
+  totalDaysLabel: '0',
+  monthLabel: '0',
+  weekLabel: '0'
+};
+
+function getDefaultBirthDraft() {
+  return {
+    name: '宝贝',
+    date: core.getDateKey(new Date()),
+    time: '00:00'
+  };
+}
+
+function decorateAgeSummary(ageSummary) {
+  return {
+    ...ageSummary,
+    totalDaysLabel: `${ageSummary.totalDays} 天`
+  };
+}
+
 Page({
   data: {
     version: '1.1.7-mini',
@@ -34,11 +58,9 @@ Page({
     viewDateKey: core.getDateKey(new Date()),
     viewDateLabel: '',
     viewDateTag: '',
-    ageSummary: {
-      totalDays: 0,
-      monthLabel: '0个月0天',
-      weekLabel: '第 1 周'
-    },
+    ageSummary: EMPTY_AGE_SUMMARY,
+    hasBirthInfo: false,
+    babyNameLabel: '宝宝',
     birthInfo: core.DEFAULT_BIRTH,
     stats: {
       milk: 0,
@@ -78,7 +100,7 @@ Page({
     editRecordId: '',
     editForm: null,
     birthVisible: false,
-    birthDraft: core.DEFAULT_BIRTH,
+    birthDraft: getDefaultBirthDraft(),
     voiceSupported: false,
     voiceVisible: false,
     voiceStatus: '准备开始',
@@ -108,9 +130,11 @@ Page({
     this.voiceCancelled = false;
     this.pendingVoiceRecord = null;
     this.syncDocId = '';
+    this.birthInfoConfiguredInSession = false;
     this.initVoiceManager();
     this.resetDefaultTimes();
     this.refreshPageState();
+    this.enableShareMenu();
   },
 
   onUnload() {
@@ -118,6 +142,28 @@ Page({
     if (recordManager) {
       try { recordManager.stop(); } catch (error) {}
     }
+  },
+
+  enableShareMenu() {
+    if (typeof wx.showShareMenu !== 'function') return;
+    wx.showShareMenu({
+      withShareTicket: false,
+      menus: ['shareAppMessage', 'shareTimeline']
+    });
+  },
+
+  onShareAppMessage() {
+    return {
+      title: SHARE_TITLE,
+      path: SHARE_PATH
+    };
+  },
+
+  onShareTimeline() {
+    return {
+      title: SHARE_TITLE,
+      query: ''
+    };
   },
 
   initVoiceManager() {
@@ -179,7 +225,8 @@ Page({
 
   refreshPageState() {
     const viewDate = core.parseDateKey(this.data.viewDateKey);
-    const ageSummary = core.getAgeSummary(this.birthInfo, new Date());
+    const hasBirthInfo = (this.data.syncLoggedIn || this.birthInfoConfiguredInSession) && core.hasSavedBirthInfo();
+    const ageSummary = hasBirthInfo ? decorateAgeSummary(core.getAgeSummary(this.birthInfo, new Date())) : EMPTY_AGE_SUMMARY;
     const stats = core.getDailyStats(this.records, this.data.viewDateKey);
     const supplementStatus = core.getSupplementStatus(this.records, this.data.viewDateKey, new Date());
     const groupedRecords = core.getGroupedRecords(this.records, this.data.viewDateKey, this.collapsedState[this.data.viewDateKey] || {}).map(group => ({
@@ -200,6 +247,8 @@ Page({
     this.setData({
       birthInfo: this.birthInfo,
       ageSummary,
+      hasBirthInfo,
+      babyNameLabel: hasBirthInfo ? (this.birthInfo.name || '宝宝') : '宝宝',
       viewDateLabel: `${viewDate.getFullYear()}年${viewDate.getMonth() + 1}月${viewDate.getDate()}日`,
       viewDateTag: core.getDateTag(viewDate),
       stats,
@@ -394,10 +443,11 @@ Page({
       this.syncDocId = result.docId || '';
       this.records = core.sortRecordsByRecent(result.records || []);
       this.birthInfo = { ...core.DEFAULT_BIRTH, ...(result.birthInfo || {}) };
+      this.birthInfoConfiguredInSession = true;
       core.saveRecords(this.records);
       core.saveBirthInfo(this.birthInfo);
-      this.refreshPageState();
       this.refreshSyncState('已同步');
+      this.refreshPageState();
       this.showToast('微信登录成功，已同步');
     } catch (error) {
       this.refreshSyncState('同步失败');
@@ -575,9 +625,10 @@ Page({
   },
 
   openBirthModal() {
+    const draft = this.data.hasBirthInfo ? clone(this.birthInfo) : getDefaultBirthDraft();
     this.setData({
       birthVisible: true,
-      birthDraft: clone(this.birthInfo)
+      birthDraft: draft
     });
   },
 
@@ -599,11 +650,12 @@ Page({
 
   saveBirthInfo() {
     const draft = this.data.birthDraft;
-    const name = String(draft.name || '').trim() || '宝宝';
+    const name = String(draft.name || '').trim() || '宝贝';
     const birthDate = new Date(`${draft.date}T${draft.time}:00`);
     if (Number.isNaN(birthDate.getTime())) return this.showToast('出生时间格式不正确');
     if (birthDate > new Date()) return this.showToast('出生时间不能晚于现在');
     this.birthInfo = { ...clone(draft), name };
+    this.birthInfoConfiguredInSession = true;
     core.saveBirthInfo(this.birthInfo);
     this.setData({ birthVisible: false });
     this.refreshPageState();
