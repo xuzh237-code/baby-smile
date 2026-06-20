@@ -64,7 +64,6 @@
 
       <view class="section-card">
         <view class="section-title-row amber-text">
-          <view class="section-icon amber-soft">奶</view>
           <text class="section-title">喝奶</text>
         </view>
         <view class="tab-group">
@@ -92,7 +91,6 @@
 
       <view class="section-card">
         <view class="section-title-row emerald-text">
-          <view class="section-icon emerald-soft">尿</view>
           <text class="section-title">排泄</text>
         </view>
         <view class="tab-group">
@@ -112,7 +110,6 @@
       <view class="section-card">
         <view class="section-head">
           <view class="section-title-row sky-text">
-            <view class="section-icon sky-soft">月</view>
             <text class="section-title">睡眠</text>
           </view>
           <label class="switch-row">
@@ -152,7 +149,6 @@
       <view class="section-card">
         <view class="section-head">
           <view class="section-title-row indigo-text">
-            <view class="section-icon indigo-soft">D</view>
             <text class="section-title">补剂</text>
           </view>
           <text class="hint-pill">{{supplementHint}}</text>
@@ -251,6 +247,34 @@
     </scroll-view>
   </view>
 
+  <view wx:if="{{wechatProfileVisible}}" class="overlay" bindtap="closeWechatProfileModal"></view>
+  <view wx:if="{{wechatProfileVisible}}" class="sheet login-sheet">
+    <view class="sheet-head login-sheet-head">
+      <text class="sheet-title">微信登录</text>
+      <button class="sheet-close" bindtap="closeWechatProfileModal">✕</button>
+    </view>
+    <view class="login-profile-card">
+      <view class="login-profile-copy">
+        <text class="login-profile-title">使用微信头像和昵称</text>
+        <text class="login-profile-hint">资料只用于本机显示，跨设备恢复依赖同一个微信身份。</text>
+      </view>
+      <view class="login-identity-row">
+        <button class="avatar-picker" open-type="chooseAvatar" bindchooseavatar="onChooseWechatAvatar">
+          <image wx:if="{{wechatProfileDraft.avatarUrl}}" class="avatar-image" src="{{wechatProfileDraft.avatarUrl}}" mode="aspectFill" />
+          <text wx:else class="avatar-placeholder">头像</text>
+        </button>
+        <view class="nickname-panel">
+          <text class="field-label">微信昵称</text>
+          <input class="field-input wechat-nickname-input" type="nickname" maxlength="20" placeholder="点击选择微信昵称" value="{{wechatProfileDraft.nickname}}" bindinput="onWechatNicknameInput" bindchange="onWechatNicknameChange" />
+        </view>
+      </view>
+    </view>
+    <view class="modal-actions">
+      <button class="plain-btn" bindtap="closeWechatProfileModal">取消</button>
+      <button class="primary-btn green" loading="{{syncBusy}}" bindtap="confirmWechatLogin">登录并同步</button>
+    </view>
+  </view>
+
   <view wx:if="{{birthVisible}}" class="overlay" bindtap="closeBirthModal"></view>
   <view wx:if="{{birthVisible}}" class="sheet">
     <view class="sheet-head birth-sheet-head">
@@ -259,7 +283,7 @@
     </view>
     <view class="field-block">
       <text class="field-label">宝宝名称</text>
-      <input class="field-input baby-name-input" maxlength="12" placeholder="请输入宝宝名称" value="{{birthDraft.name}}" bindinput="onBirthNameInput" />
+      <input class="field-input baby-name-input" type="nickname" maxlength="12" placeholder="请输入宝宝名称" value="{{birthDraft.name}}" bindinput="onBirthNameInput" bindchange="onBirthNicknameChange" />
     </view>
     <view class="field-block">
       <text class="field-label">出生日期</text>

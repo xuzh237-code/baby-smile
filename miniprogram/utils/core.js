@@ -1,7 +1,8 @@
 const STORAGE_KEYS = {
   records: 'baby_records_mp_v1',
   birth: 'baby_birth_info_mp_v1',
-  collapse: 'baby_collapsed_mp_v1'
+  collapse: 'baby_collapsed_mp_v1',
+  wechatProfile: 'baby_wechat_profile_mp_v1'
 };
 
 const DEFAULT_BIRTH = {
@@ -259,6 +260,25 @@ function hasSavedBirthInfo() {
 
 function saveBirthInfo(info) {
   wx.setStorageSync(STORAGE_KEYS.birth, info);
+}
+
+function loadWechatProfile() {
+  try {
+    const stored = wx.getStorageSync(STORAGE_KEYS.wechatProfile);
+    return {
+      avatarUrl: stored?.avatarUrl || '',
+      nickname: stored?.nickname || ''
+    };
+  } catch (error) {
+    return { avatarUrl: '', nickname: '' };
+  }
+}
+
+function saveWechatProfile(profile) {
+  wx.setStorageSync(STORAGE_KEYS.wechatProfile, {
+    avatarUrl: profile?.avatarUrl || '',
+    nickname: profile?.nickname || ''
+  });
 }
 
 function loadCollapsedState() {
@@ -595,6 +615,8 @@ module.exports = {
   loadBirthInfo,
   hasSavedBirthInfo,
   saveBirthInfo,
+  loadWechatProfile,
+  saveWechatProfile,
   loadCollapsedState,
   saveCollapsedState,
   getAgeSummary,

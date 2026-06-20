@@ -53,8 +53,8 @@ function decorateAgeSummary(ageSummary) {
 
 Page({
   data: {
-    version: '1.1.7-mini',
-    releaseDate: '2026-05-26',
+    version: '1.1.8-mini',
+    releaseDate: '2026-06-20',
     viewDateKey: core.getDateKey(new Date()),
     viewDateLabel: '',
     viewDateTag: '',
@@ -71,6 +71,11 @@ Page({
     syncBusy: false,
     syncActionText: '微信登录',
     syncStatusText: '本地可用',
+    wechatProfileVisible: false,
+    wechatProfileDraft: {
+      avatarUrl: '',
+      nickname: ''
+    },
     groupedRecords: [],
     milkType: '瓶喂母乳',
     milkVolume: '',
@@ -130,6 +135,7 @@ Page({
     this.voiceCancelled = false;
     this.pendingVoiceRecord = null;
     this.syncDocId = '';
+    this.wechatProfile = core.loadWechatProfile();
     this.birthInfoConfiguredInSession = false;
     this.initVoiceManager();
     this.resetDefaultTimes();
@@ -401,36 +407,66 @@ Page({
       await cloudSync.saveSyncDoc(this.syncDocId, this.records, this.birthInfo);
       this.refreshSyncState('已同步');
     } catch (error) {
+      console.error('push cloud sync failed', error);
       this.refreshSyncState('同步失败');
     }
   },
 
-  requestWechatProfile() {
-    return new Promise((resolve, reject) => {
-      if (typeof wx.getUserProfile !== 'function') {
-        reject(new Error('profile api unavailable'));
-        return;
+  async loginWithWechat() {
+    if (this.data.syncBusy) return;
+    if (!this.data.syncLoggedIn) {
+      this.openWechatProfileModal();
+      return;
+    }
+    await this.syncWithWechatCloud();
+  },
+
+  openWechatProfileModal() {
+    const profile = this.wechatProfile || core.loadWechatProfile();
+    this.setData({
+      wechatProfileVisible: true,
+      wechatProfileDraft: {
+        avatarUrl: profile.avatarUrl || '',
+        nickname: profile.nickname || ''
       }
-      wx.getUserProfile({
-        desc: '用于登录后同步宝宝日志数据',
-        lang: 'zh_CN',
-        success: (res) => resolve(res.userInfo || {}),
-        fail: reject
-      });
     });
   },
 
-  async loginWithWechat() {
+  closeWechatProfileModal() {
+    if (this.data.syncBusy) return;
+    this.setData({ wechatProfileVisible: false });
+  },
+
+  onChooseWechatAvatar(event) {
+    this.setData({ 'wechatProfileDraft.avatarUrl': event.detail.avatarUrl || '' });
+  },
+
+  onWechatNicknameInput(event) {
+    this.setData({ 'wechatProfileDraft.nickname': event.detail.value });
+  },
+
+  onWechatNicknameChange(event) {
+    const nickname = String(event.detail.value || '').trim();
+    this.setData({ 'wechatProfileDraft.nickname': nickname });
+  },
+
+  async confirmWechatLogin() {
+    if (this.data.syncBusy) return;
+    const draft = this.data.wechatProfileDraft || {};
+    const profile = {
+      avatarUrl: draft.avatarUrl || '',
+      nickname: String(draft.nickname || '').trim()
+    };
+    this.wechatProfile = profile;
+    core.saveWechatProfile(profile);
+    this.setData({ wechatProfileVisible: false });
+    await this.syncWithWechatCloud();
+  },
+
+  async syncWithWechatCloud() {
     if (this.data.syncBusy) return;
     if (!cloudSync.isConfigured()) {
       this.showToast('请先配置云开发环境');
-      return;
-    }
-    try {
-      await this.requestWechatProfile();
-    } catch (error) {
-      this.refreshSyncState('本地可用');
-      this.showToast('已取消微信登录');
       return;
     }
     this.setData({ syncBusy: true, syncStatusText: '同步中…' });
@@ -448,10 +484,11 @@ Page({
       core.saveBirthInfo(this.birthInfo);
       this.refreshSyncState('已同步');
       this.refreshPageState();
-      this.showToast('微信登录成功，已同步');
+      this.showToast('已用微信身份同步');
     } catch (error) {
+      console.error('wechat cloud sync failed', error);
       this.refreshSyncState('同步失败');
-      this.showToast('微信登录或同步失败');
+      this.showToast(cloudSync.getReadableCloudError(error));
     } finally {
       this.setData({ syncBusy: false });
     }
@@ -638,6 +675,11 @@ Page({
 
   onBirthNameInput(event) {
     this.setData({ 'birthDraft.name': event.detail.value });
+  },
+
+  onBirthNicknameChange(event) {
+    const value = (event.detail.value || '').trim();
+    if (value) this.setData({ 'birthDraft.name': value });
   },
 
   onBirthDateChange(event) {
