@@ -168,6 +168,33 @@ function parseCsvLine(line = '') {
   return cells;
 }
 
+function normalizeDateKeyValue(value = '') {
+  const text = String(value || '').trim();
+  if (!text) return '';
+  if (/^\d{4}-\d{1,2}-\d{1,2}$/.test(text)) {
+    const [year, month, day] = text.split('-').map(Number);
+    return `${year}-${padNumber(month)}-${padNumber(day)}`;
+  }
+  if (/^\d{4}\/\d{1,2}\/\d{1,2}$/.test(text)) {
+    const [year, month, day] = text.split('/').map(Number);
+    return `${year}-${padNumber(month)}-${padNumber(day)}`;
+  }
+  return '';
+}
+
+function buildLegacyMeta(row = {}) {
+  const meta = {};
+  if (row.meta_start) meta.start = row.meta_start;
+  if (row.meta_end) meta.end = row.meta_end;
+  if (row.meta_awake_start) meta.awakeStart = row.meta_awake_start;
+  if (row.meta_awake_end) meta.awakeEnd = row.meta_awake_end;
+  if (row.meta_awake_minutes) meta.awakeMinutes = Number(row.meta_awake_minutes) || 0;
+  if (row.meta_volume) meta.volume = Number(row.meta_volume) || 0;
+  if (row.meta_cross) meta.cross = row.meta_cross === 'true' || row.meta_cross === '1';
+  if (row.meta_time) meta.time = row.meta_time;
+  return meta;
+}
+
 function recordsToCsv(recordList = []) {
   const rows = [CSV_COLUMNS.join(',')];
   sortRecordsByRecent(recordList).forEach(record => {
@@ -201,8 +228,11 @@ function csvToRecords(csv = '') {
     } catch (error) {
       meta = {};
     }
+    if (!Object.keys(meta).length) meta = buildLegacyMeta(row);
+    const dateKey = normalizeDateKeyValue(row.dateKey || row.date_key) || normalizeDateKeyValue(row.date);
     return normalizeRecord({
       ...row,
+      dateKey,
       raw: Number(row.raw) || 0,
       meta
     });

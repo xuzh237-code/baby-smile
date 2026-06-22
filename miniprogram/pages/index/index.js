@@ -53,8 +53,8 @@ function decorateAgeSummary(ageSummary) {
 
 Page({
   data: {
-    version: '1.1.8-mini',
-    releaseDate: '2026-06-20',
+    version: '1.1.9-mini',
+    releaseDate: '2026-06-22',
     viewDateKey: core.getDateKey(new Date()),
     viewDateLabel: '',
     viewDateTag: '',
@@ -615,6 +615,33 @@ Page({
   },
 
   importData() {
+    wx.showActionSheet({
+      itemList: ['从剪贴板导入', '选择CSV文件'],
+      success: ({ tapIndex }) => {
+        if (tapIndex === 0) this.importCsvFromClipboard();
+        if (tapIndex === 1) this.importCsvFromFile();
+      }
+    });
+  },
+
+  importCsvText(csvText = '') {
+    try {
+      const incomingRecords = core.csvToRecords(csvText);
+      if (!incomingRecords.length) {
+        this.showToast('没有可导入数据');
+        return;
+      }
+      const merged = new Map(this.records.map(record => [record.id, record]));
+      incomingRecords.forEach(record => merged.set(record.id, record));
+      this.records = core.sortRecordsByRecent([...merged.values()]);
+      this.persistRecords();
+      this.showToast(`已导入 ${incomingRecords.length} 条`);
+    } catch (error) {
+      this.showToast('导入失败，请检查CSV');
+    }
+  },
+
+  importCsvFromClipboard() {
     wx.showModal({
       title: '导入CSV',
       content: '请先复制导出的 CSV 内容，确认后会从剪贴板导入并合并数据。',
@@ -622,25 +649,32 @@ Page({
       success: (result) => {
         if (!result.confirm) return;
         wx.getClipboardData({
-          success: ({ data }) => {
-            try {
-              const incomingRecords = core.csvToRecords(data);
-              if (!incomingRecords.length) {
-                this.showToast('剪贴板没有可导入数据');
-                return;
-              }
-              const merged = new Map(this.records.map(record => [record.id, record]));
-              incomingRecords.forEach(record => merged.set(record.id, record));
-              this.records = core.sortRecordsByRecent([...merged.values()]);
-              this.persistRecords();
-              this.showToast(`已导入 ${incomingRecords.length} 条`);
-            } catch (error) {
-              this.showToast('导入失败，请检查CSV');
-            }
-          },
+          success: ({ data }) => this.importCsvText(data),
           fail: () => this.showToast('读取剪贴板失败')
         });
       }
+    });
+  },
+
+  importCsvFromFile() {
+    wx.chooseMessageFile({
+      count: 1,
+      type: 'file',
+      extension: ['csv'],
+      success: ({ tempFiles }) => {
+        const filePath = tempFiles && tempFiles[0] && tempFiles[0].path;
+        if (!filePath) {
+          this.showToast('没有选择文件');
+          return;
+        }
+        wx.getFileSystemManager().readFile({
+          filePath,
+          encoding: 'utf8',
+          success: ({ data }) => this.importCsvText(data),
+          fail: () => this.showToast('读取CSV失败')
+        });
+      },
+      fail: () => this.showToast('未选择CSV')
     });
   },
 
