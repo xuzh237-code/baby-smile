@@ -2,7 +2,8 @@ const STORAGE_KEYS = {
   records: 'baby_records_mp_v1',
   birth: 'baby_birth_info_mp_v1',
   collapse: 'baby_collapsed_mp_v1',
-  wechatProfile: 'baby_wechat_profile_mp_v1'
+  wechatProfile: 'baby_wechat_profile_mp_v1',
+  wechatSyncDocId: 'baby_wechat_sync_doc_id_mp_v1'
 };
 
 const DEFAULT_BIRTH = {
@@ -13,6 +14,7 @@ const DEFAULT_BIRTH = {
 
 const CATEGORY_ORDER = ['喝奶', '排泄', '睡眠', '补剂'];
 const CSV_COLUMNS = ['id', 'dateKey', 'date', 'cat', 'type', 'val', 'raw', 'icon', 'color', 'time', 'meta', 'createdAt', 'updatedAt'];
+const WECHAT_SYNC_SESSION_EXPIRES_MS = 30 * 24 * 60 * 60 * 1000;
 
 function padNumber(value) {
   return String(value).padStart(2, '0');
@@ -309,6 +311,39 @@ function saveWechatProfile(profile) {
     avatarUrl: profile?.avatarUrl || '',
     nickname: profile?.nickname || ''
   });
+}
+
+function loadWechatSyncSession() {
+  try {
+    const stored = wx.getStorageSync(STORAGE_KEYS.wechatSyncDocId);
+    const now = Date.now();
+    const session = typeof stored === 'string' ? { docId: stored, loggedInAt: now } : (stored || {});
+    const docId = session.docId || '';
+    const loggedInAt = Number(session.loggedInAt || 0);
+    if (typeof stored === 'string' && docId) wx.setStorageSync(STORAGE_KEYS.wechatSyncDocId, session);
+    const expired = !!(docId && (!loggedInAt || now - loggedInAt > WECHAT_SYNC_SESSION_EXPIRES_MS));
+    if (expired) wx.removeStorageSync(STORAGE_KEYS.wechatSyncDocId);
+    return { docId: expired ? '' : docId, expired };
+  } catch (error) {
+    return { docId: '', expired: false };
+  }
+}
+
+function loadWechatSyncDocId() {
+  return loadWechatSyncSession().docId;
+}
+
+function saveWechatSyncDocId(docId) {
+  if (docId) {
+    wx.setStorageSync(STORAGE_KEYS.wechatSyncDocId, {
+      docId,
+      loggedInAt: Date.now()
+    });
+  }
+}
+
+function clearWechatSyncSession() {
+  wx.removeStorageSync(STORAGE_KEYS.wechatSyncDocId);
 }
 
 function loadCollapsedState() {
@@ -647,6 +682,10 @@ module.exports = {
   saveBirthInfo,
   loadWechatProfile,
   saveWechatProfile,
+  loadWechatSyncSession,
+  loadWechatSyncDocId,
+  saveWechatSyncDocId,
+  clearWechatSyncSession,
   loadCollapsedState,
   saveCollapsedState,
   getAgeSummary,

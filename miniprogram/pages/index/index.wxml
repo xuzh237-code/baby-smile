@@ -250,13 +250,13 @@
   <view wx:if="{{wechatProfileVisible}}" class="overlay" bindtap="closeWechatProfileModal"></view>
   <view wx:if="{{wechatProfileVisible}}" class="sheet login-sheet">
     <view class="sheet-head login-sheet-head">
-      <text class="sheet-title">微信登录</text>
+      <text class="sheet-title">{{syncLoggedIn ? '微信同步' : '微信登录'}}</text>
       <button class="sheet-close" bindtap="closeWechatProfileModal">✕</button>
     </view>
     <view class="login-profile-card">
       <view class="login-profile-copy">
-        <text class="login-profile-title">使用微信头像和昵称</text>
-        <text class="login-profile-hint">资料只用于本机显示，跨设备恢复依赖同一个微信身份。</text>
+        <text class="login-profile-title">{{syncLoggedIn ? '当前已连接微信同步' : '使用微信头像和昵称'}}</text>
+        <text class="login-profile-hint">{{syncLoggedIn ? '退出登录只会关闭本机自动同步，不会删除本机记录。' : '资料只用于本机显示，跨设备恢复依赖同一个微信身份。'}}</text>
       </view>
       <view class="login-identity-row">
         <button class="avatar-picker" open-type="chooseAvatar" bindchooseavatar="onChooseWechatAvatar">
@@ -269,9 +269,13 @@
         </view>
       </view>
     </view>
-    <view class="modal-actions">
+    <view wx:if="{{!syncLoggedIn}}" class="modal-actions">
       <button class="plain-btn" bindtap="closeWechatProfileModal">取消</button>
       <button class="primary-btn green" loading="{{syncBusy}}" bindtap="confirmWechatLogin">登录并同步</button>
+    </view>
+    <view wx:else class="login-manage-actions">
+      <button class="primary-btn green full-action" loading="{{syncBusy}}" bindtap="syncWithWechatCloud">立即同步</button>
+      <button class="plain-btn full-action" bindtap="logoutWechat">退出登录</button>
     </view>
   </view>
 

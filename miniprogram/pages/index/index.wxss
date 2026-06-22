@@ -409,6 +409,17 @@ button::after {
   box-shadow: 0 14rpx 28rpx rgba(16, 185, 129, 0.16);
 }
 
+.login-manage-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  margin-top: 24rpx;
+}
+
+.full-action {
+  width: 100%;
+}
+
 .delete-btn {
   position: absolute;
   top: 0;

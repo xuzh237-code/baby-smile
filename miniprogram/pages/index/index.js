@@ -134,11 +134,13 @@ Page({
     this.voiceAnimationTimer = null;
     this.voiceCancelled = false;
     this.pendingVoiceRecord = null;
-    this.syncDocId = '';
     this.wechatProfile = core.loadWechatProfile();
-    this.birthInfoConfiguredInSession = false;
+    const syncSession = core.loadWechatSyncSession();
+    this.syncDocId = syncSession.docId;
+    if (this.syncDocId) core.saveWechatSyncDocId(this.syncDocId);
     this.initVoiceManager();
     this.resetDefaultTimes();
+    this.refreshSyncState(syncSession.expired ? '登录已过期' : '');
     this.refreshPageState();
     this.enableShareMenu();
   },
@@ -231,7 +233,7 @@ Page({
 
   refreshPageState() {
     const viewDate = core.parseDateKey(this.data.viewDateKey);
-    const hasBirthInfo = (this.data.syncLoggedIn || this.birthInfoConfiguredInSession) && core.hasSavedBirthInfo();
+    const hasBirthInfo = core.hasSavedBirthInfo();
     const ageSummary = hasBirthInfo ? decorateAgeSummary(core.getAgeSummary(this.birthInfo, new Date())) : EMPTY_AGE_SUMMARY;
     const stats = core.getDailyStats(this.records, this.data.viewDateKey);
     const supplementStatus = core.getSupplementStatus(this.records, this.data.viewDateKey, new Date());
@@ -338,6 +340,37 @@ Page({
     wx.showToast({ title, icon: 'none' });
   },
 
+  getClosedPanelState() {
+    return {
+      analysisVisible: false,
+      wechatProfileVisible: false,
+      birthVisible: false,
+      editVisible: false,
+      editRecordId: '',
+      editForm: null,
+      voiceVisible: false,
+      voiceListening: false,
+      voiceProcessing: false,
+      voiceConfirmVisible: false,
+      voiceConfirmMode: '',
+      voiceConfirmForm: null
+    };
+  },
+
+  closeAllPanels(extra = {}, callback) {
+    if (this.data.voiceVisible && !extra.voiceVisible) {
+      this.voiceCancelled = true;
+      this.stopVoiceAnimation();
+      if (recordManager) {
+        try { recordManager.stop(); } catch (error) {}
+      }
+    }
+    this.setData({
+      ...this.getClosedPanelState(),
+      ...extra
+    }, callback);
+  },
+
   shiftDate(event) {
     const offset = Number(event.currentTarget.dataset.offset || 0);
     const date = core.parseDateKey(this.data.viewDateKey);
@@ -405,6 +438,7 @@ Page({
     if (!this.syncDocId || !cloudSync.isConfigured()) return;
     try {
       await cloudSync.saveSyncDoc(this.syncDocId, this.records, this.birthInfo);
+      core.saveWechatSyncDocId(this.syncDocId);
       this.refreshSyncState('已同步');
     } catch (error) {
       console.error('push cloud sync failed', error);
@@ -414,16 +448,12 @@ Page({
 
   async loginWithWechat() {
     if (this.data.syncBusy) return;
-    if (!this.data.syncLoggedIn) {
-      this.openWechatProfileModal();
-      return;
-    }
-    await this.syncWithWechatCloud();
+    this.openWechatProfileModal();
   },
 
   openWechatProfileModal() {
     const profile = this.wechatProfile || core.loadWechatProfile();
-    this.setData({
+    this.closeAllPanels({
       wechatProfileVisible: true,
       wechatProfileDraft: {
         avatarUrl: profile.avatarUrl || '',
@@ -463,6 +493,25 @@ Page({
     await this.syncWithWechatCloud();
   },
 
+  logoutWechat() {
+    if (this.data.syncBusy) return;
+    wx.showModal({
+      title: '退出微信同步',
+      content: '退出后本机记录仍会保留，但不会继续自动同步到云端。',
+      confirmText: '退出',
+      confirmColor: '#ef4444',
+      success: ({ confirm }) => {
+        if (!confirm) return;
+        this.syncDocId = '';
+        core.clearWechatSyncSession();
+        this.refreshSyncState('已退出登录');
+        this.refreshPageState();
+        this.setData({ wechatProfileVisible: false });
+        this.showToast('已退出登录');
+      }
+    });
+  },
+
   async syncWithWechatCloud() {
     if (this.data.syncBusy) return;
     if (!cloudSync.isConfigured()) {
@@ -477,9 +526,10 @@ Page({
         return;
       }
       this.syncDocId = result.docId || '';
+      if (!this.syncDocId) throw new Error('missing sync doc id');
+      core.saveWechatSyncDocId(this.syncDocId);
       this.records = core.sortRecordsByRecent(result.records || []);
       this.birthInfo = { ...core.DEFAULT_BIRTH, ...(result.birthInfo || {}) };
-      this.birthInfoConfiguredInSession = true;
       core.saveRecords(this.records);
       core.saveBirthInfo(this.birthInfo);
       this.refreshSyncState('已同步');
@@ -598,7 +648,7 @@ Page({
   },
 
   openAnalysis() {
-    this.setData({ analysisVisible: true, analysisManualSelection: false }, () => this.refreshPageState());
+    this.closeAllPanels({ analysisVisible: true, analysisManualSelection: false }, () => this.refreshPageState());
   },
 
   closeAnalysis() {
@@ -697,7 +747,7 @@ Page({
 
   openBirthModal() {
     const draft = this.data.hasBirthInfo ? clone(this.birthInfo) : getDefaultBirthDraft();
-    this.setData({
+    this.closeAllPanels({
       birthVisible: true,
       birthDraft: draft
     });
@@ -731,7 +781,6 @@ Page({
     if (Number.isNaN(birthDate.getTime())) return this.showToast('出生时间格式不正确');
     if (birthDate > new Date()) return this.showToast('出生时间不能晚于现在');
     this.birthInfo = { ...clone(draft), name };
-    this.birthInfoConfiguredInSession = true;
     core.saveBirthInfo(this.birthInfo);
     this.setData({ birthVisible: false });
     this.refreshPageState();
@@ -754,7 +803,7 @@ Page({
       awakeStart: record.meta?.awakeStart || '',
       awakeEnd: record.meta?.awakeEnd || ''
     };
-    this.setData({
+    this.closeAllPanels({
       editVisible: true,
       editRecordId: recordId,
       editForm
@@ -879,7 +928,7 @@ Page({
       return this.showToast('当前环境暂不支持语音输入');
     }
     this.voiceCancelled = false;
-    this.setData({
+    this.closeAllPanels({
       voiceVisible: true,
       voiceStatus: '正在听…',
       voiceHint: '说完后稍等一下，我会帮你识别',
@@ -915,8 +964,7 @@ Page({
       sleep: '识别到这条睡眠记录，可以先手动修改，再确认保存。'
     };
     this.pendingVoiceRecord = { mode, transcript };
-    this.setData({
-      voiceVisible: false,
+    this.closeAllPanels({
       voiceConfirmVisible: true,
       voiceConfirmMode: mode,
       voiceConfirmSummary: labels[mode],
