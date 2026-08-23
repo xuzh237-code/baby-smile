@@ -51,13 +51,57 @@ function decorateAgeSummary(ageSummary) {
   };
 }
 
+const CALENDAR_YEAR_START = 1900;
+const CALENDAR_YEAR_END = 2100;
+const CALENDAR_YEAR_OPTIONS = Array.from(
+  { length: CALENDAR_YEAR_END - CALENDAR_YEAR_START + 1 },
+  (_, index) => CALENDAR_YEAR_START + index
+);
+const CALENDAR_MONTH_OPTIONS = Array.from({ length: 12 }, (_, index) => `${index + 1}月`);
+const CALENDAR_WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六'];
+
+function getCalendarDateKey(year, month, day) {
+  return `${year}-${core.padNumber(month)}-${core.padNumber(day)}`;
+}
+
+function getCalendarDays(year, month, selectedKey) {
+  const firstWeekday = new Date(year, month - 1, 1).getDay();
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const todayKey = core.getDateKey(new Date());
+
+  return Array.from({ length: 42 }, (_, index) => {
+    const day = index - firstWeekday + 1;
+    if (day < 1 || day > daysInMonth) {
+      return { key: `empty-${index}`, empty: true };
+    }
+    const key = getCalendarDateKey(year, month, day);
+    return {
+      key,
+      day,
+      empty: false,
+      isSelected: key === selectedKey,
+      isToday: key === todayKey
+    };
+  });
+}
+
 Page({
   data: {
-    version: '1.1.9-mini',
-    releaseDate: '2026-06-22',
+    version: '1.1.10-mini',
+    releaseDate: '2026-08-23',
     viewDateKey: core.getDateKey(new Date()),
     viewDateLabel: '',
     viewDateTag: '',
+    datePickerVisible: false,
+    calendarYear: new Date().getFullYear(),
+    calendarMonth: new Date().getMonth() + 1,
+    calendarYearIndex: new Date().getFullYear() - CALENDAR_YEAR_START,
+    calendarMonthIndex: new Date().getMonth(),
+    calendarYearOptions: CALENDAR_YEAR_OPTIONS,
+    calendarMonthOptions: CALENDAR_MONTH_OPTIONS,
+    calendarWeekdays: CALENDAR_WEEKDAYS,
+    calendarSelectedKey: core.getDateKey(new Date()),
+    calendarDays: [],
     ageSummary: EMPTY_AGE_SUMMARY,
     hasBirthInfo: false,
     babyNameLabel: '宝宝',
@@ -343,6 +387,7 @@ Page({
   getClosedPanelState() {
     return {
       analysisVisible: false,
+      datePickerVisible: false,
       wechatProfileVisible: false,
       birthVisible: false,
       editVisible: false,
@@ -377,6 +422,96 @@ Page({
     date.setDate(date.getDate() + offset);
     this.setData({
       viewDateKey: core.getDateKey(date),
+      analysisManualSelection: false
+    });
+    this.resetDefaultTimes();
+    this.refreshPageState();
+  },
+
+  openDatePicker() {
+    const selectedDate = core.parseDateKey(this.data.viewDateKey);
+    const year = selectedDate.getFullYear();
+    const month = selectedDate.getMonth() + 1;
+    this.closeAllPanels({
+      datePickerVisible: true,
+      calendarYear: year,
+      calendarMonth: month,
+      calendarYearIndex: year - CALENDAR_YEAR_START,
+      calendarMonthIndex: month - 1,
+      calendarSelectedKey: this.data.viewDateKey,
+      calendarDays: getCalendarDays(year, month, this.data.viewDateKey)
+    });
+  },
+
+  closeDatePicker() {
+    this.setData({ datePickerVisible: false });
+  },
+
+  updateCalendar(year, month) {
+    if (year < CALENDAR_YEAR_START || year > CALENDAR_YEAR_END) return;
+    const selectedDate = core.parseDateKey(this.data.calendarSelectedKey || this.data.viewDateKey);
+    const day = Math.min(selectedDate.getDate(), new Date(year, month, 0).getDate());
+    const selectedKey = getCalendarDateKey(year, month, day);
+    this.setData({
+      calendarYear: year,
+      calendarMonth: month,
+      calendarYearIndex: year - CALENDAR_YEAR_START,
+      calendarMonthIndex: month - 1,
+      calendarSelectedKey: selectedKey,
+      calendarDays: getCalendarDays(year, month, selectedKey)
+    });
+  },
+
+  onCalendarYearChange(event) {
+    const index = Number(event.detail.value);
+    const year = Number(this.data.calendarYearOptions[index]);
+    this.updateCalendar(year, this.data.calendarMonth);
+  },
+
+  onCalendarMonthChange(event) {
+    const month = Number(event.detail.value) + 1;
+    this.updateCalendar(this.data.calendarYear, month);
+  },
+
+  shiftCalendarMonth(event) {
+    const offset = Number(event.currentTarget.dataset.offset || 0);
+    const date = new Date(this.data.calendarYear, this.data.calendarMonth - 1 + offset, 1);
+    this.updateCalendar(date.getFullYear(), date.getMonth() + 1);
+  },
+
+  selectCalendarDate(event) {
+    const dateKey = event.currentTarget.dataset.key;
+    if (!dateKey) return;
+    this.setData({
+      calendarSelectedKey: dateKey,
+      calendarDays: getCalendarDays(this.data.calendarYear, this.data.calendarMonth, dateKey)
+    });
+  },
+
+  selectCalendarToday() {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = today.getMonth() + 1;
+    const selectedKey = core.getDateKey(today);
+    this.setData({
+      calendarYear: year,
+      calendarMonth: month,
+      calendarYearIndex: year - CALENDAR_YEAR_START,
+      calendarMonthIndex: month - 1,
+      calendarSelectedKey: selectedKey,
+      calendarDays: getCalendarDays(year, month, selectedKey)
+    });
+  },
+
+  confirmCalendarDate() {
+    const dateKey = this.data.calendarSelectedKey;
+    if (!dateKey || dateKey === this.data.viewDateKey) {
+      this.closeDatePicker();
+      return;
+    }
+    this.setData({
+      datePickerVisible: false,
+      viewDateKey: dateKey,
       analysisManualSelection: false
     });
     this.resetDefaultTimes();

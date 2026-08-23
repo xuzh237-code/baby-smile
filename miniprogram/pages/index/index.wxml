@@ -34,9 +34,9 @@
 
         <view class="date-nav">
           <view class="nav-btn" data-offset="-1" bindtap="shiftDate">‹</view>
-          <view class="date-display">
+          <view class="date-display" bindtap="openDatePicker">
             <text class="date-label">{{viewDateLabel}}</text>
-            <text class="date-tag">{{viewDateTag}}</text>
+            <text class="date-tag">{{viewDateTag}} · 选择日期</text>
           </view>
           <view wx:if="{{viewDateTag !== '今天'}}" class="today-btn" bindtap="jumpToToday">今天</view>
           <view class="nav-btn" data-offset="1" bindtap="shiftDate">›</view>
@@ -198,6 +198,52 @@
       <view class="footer-meta">小程序适配版 · v{{version}} · {{releaseDate}}</view>
     </view>
   </scroll-view>
+
+  <view wx:if="{{datePickerVisible}}" class="overlay" bindtap="closeDatePicker"></view>
+  <view wx:if="{{datePickerVisible}}" class="sheet calendar-sheet">
+    <view class="calendar-head">
+      <view>
+        <text class="calendar-eyebrow">选择日期</text>
+        <text class="calendar-selected-label">{{calendarSelectedKey}}</text>
+      </view>
+      <button class="sheet-close" bindtap="closeDatePicker">✕</button>
+    </view>
+
+    <view class="calendar-month-row">
+      <view class="calendar-month-btn" data-offset="-1" bindtap="shiftCalendarMonth">‹</view>
+      <view class="calendar-selectors">
+        <picker class="calendar-selector" mode="selector" range="{{calendarYearOptions}}" value="{{calendarYearIndex}}" bindchange="onCalendarYearChange">
+          <view class="calendar-selector-value">{{calendarYear}}年 <text class="calendar-selector-arrow">⌄</text></view>
+        </picker>
+        <picker class="calendar-selector" mode="selector" range="{{calendarMonthOptions}}" value="{{calendarMonthIndex}}" bindchange="onCalendarMonthChange">
+          <view class="calendar-selector-value">{{calendarMonth}}月 <text class="calendar-selector-arrow">⌄</text></view>
+        </picker>
+      </view>
+      <view class="calendar-month-btn" data-offset="1" bindtap="shiftCalendarMonth">›</view>
+    </view>
+
+    <view class="calendar-week-row">
+      <text wx:for="{{calendarWeekdays}}" wx:key="*this" class="calendar-weekday">{{item}}</text>
+    </view>
+    <view class="calendar-days">
+      <view
+        wx:for="{{calendarDays}}"
+        wx:key="key"
+        class="calendar-day-cell"
+        data-key="{{item.empty ? '' : item.key}}"
+        bindtap="selectCalendarDate"
+      >
+        <view class="calendar-day {{item.empty ? 'empty' : ''}} {{item.isSelected ? 'selected' : ''}} {{item.isToday ? 'today' : ''}}">
+          <text wx:if="{{!item.empty}}">{{item.day}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="calendar-actions">
+      <button class="plain-btn" bindtap="selectCalendarToday">今天</button>
+      <button class="primary-btn amber" bindtap="confirmCalendarDate">确定</button>
+    </view>
+  </view>
 
   <view wx:if="{{analysisVisible}}" class="overlay" bindtap="closeAnalysis"></view>
   <view wx:if="{{analysisVisible}}" class="sheet sheet-analysis">
